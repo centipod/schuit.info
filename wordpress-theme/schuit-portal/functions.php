@@ -21,17 +21,142 @@ function schuit_portal_assets(): void {
 }
 add_action('wp_enqueue_scripts', 'schuit_portal_assets');
 
+function schuit_portal_card_excerpt(string $content, int $words = 24): string {
+    $excerpt = trim(wp_strip_all_tags($content));
+
+    if ($excerpt === '') {
+        return '';
+    }
+
+    return wp_trim_words($excerpt, $words, '…');
+}
+
+function schuit_portal_card_image_url(int $post_id, string $fallback): string {
+    $thumbnail = get_the_post_thumbnail_url($post_id, 'large');
+
+    return $thumbnail ?: $fallback;
+}
+
+function schuit_portal_home_news_cards(int $limit = 3): array {
+    $cards = [];
+    $query = new WP_Query([
+        'post_type' => 'post',
+        'posts_per_page' => $limit,
+        'ignore_sticky_posts' => true,
+    ]);
+
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            $post_id = get_the_ID();
+            $cards[] = [
+                'eyebrow' => get_the_date('j F Y', $post_id),
+                'title' => get_the_title($post_id),
+                'text' => schuit_portal_card_excerpt(get_the_content('', false, $post_id), 26),
+                'url' => get_permalink($post_id),
+                'image' => schuit_portal_card_image_url($post_id, home_url('/banner.png')),
+            ];
+        }
+
+        wp_reset_postdata();
+    }
+
+    if ($cards !== []) {
+        return array_slice($cards, 0, $limit);
+    }
+
+    return array_slice([
+        [
+            'eyebrow' => '18 mei 2024',
+            'title' => 'Familie Reünie 2024 in Hoorn',
+            'text' => 'Plannen voor een volgende familie-bijeenkomst blijven hier als achtergrondinformatie beschikbaar.',
+            'url' => home_url('/schuit/?cat=5'),
+            'image' => home_url('/banner.png'),
+        ],
+        [
+            'eyebrow' => '27 april 2024',
+            'title' => 'Nieuwe documenten toegevoegd',
+            'text' => 'Historische documenten en foto’s uit het archief worden stapsgewijs samengebracht in het portal.',
+            'url' => home_url('/schuit/?cat=5'),
+            'image' => home_url('/logo.png'),
+        ],
+        [
+            'eyebrow' => '12 maart 2024',
+            'title' => 'Schuit schepen en onze geschiedenis',
+            'text' => 'De maritieme geschiedenis en familieverhalen blijven belangrijke ankerpunten binnen het project.',
+            'url' => home_url('/schuit/?cat=5'),
+            'image' => home_url('/banner.png'),
+        ],
+    ], 0, $limit);
+}
+
+function schuit_portal_home_story_cards(): array {
+    $story_specs = [
+        [
+            'slug' => 'verhalen',
+            'eyebrow' => 'Verhalen',
+            'image' => home_url('/banner.png'),
+        ],
+        [
+            'slug' => 'familietakken',
+            'eyebrow' => 'Stamboom',
+            'image' => home_url('/logo.png'),
+        ],
+        [
+            'slug' => 'archief',
+            'eyebrow' => 'Archief',
+            'image' => home_url('/banner.png'),
+        ],
+    ];
+
+    $cards = [];
+
+    foreach ($story_specs as $spec) {
+        $page = get_page_by_path($spec['slug']);
+
+        if ($page instanceof WP_Post) {
+            $title = get_the_title($page);
+            $content = get_post_field('post_excerpt', $page->ID);
+
+            if (trim((string) $content) === '') {
+                $content = get_post_field('post_content', $page->ID);
+            }
+
+            $cards[] = [
+                'eyebrow' => $spec['eyebrow'],
+                'title' => $title,
+                'text' => schuit_portal_card_excerpt((string) $content, 24),
+                'url' => get_permalink($page),
+                'image' => schuit_portal_card_image_url($page->ID, $spec['image']),
+            ];
+
+            continue;
+        }
+
+        $fallback = schuit_portal_fallback_content($spec['slug']);
+        $cards[] = [
+            'eyebrow' => $spec['eyebrow'],
+            'title' => $fallback['title'] ?: ucfirst($spec['slug']),
+            'text' => schuit_portal_card_excerpt($fallback['content'], 24),
+            'url' => home_url('/' . $spec['slug'] . '/'),
+            'image' => $spec['image'],
+        ];
+    }
+
+    return $cards;
+}
+
 function schuit_portal_fallback_menu(): void {
     $items = [
         ['label' => 'Home', 'url' => home_url('/')],
-        ['label' => 'Familieboom', 'url' => home_url('/tree/')],
-        ['label' => 'Familietakken', 'url' => home_url('/familietakken/')],
+        ['label' => 'Nieuws', 'url' => home_url('/?post_type=post')],
         ['label' => 'Verhalen', 'url' => home_url('/verhalen/')],
-        ['label' => 'Foto\'s en archief', 'url' => home_url('/archief/')],
-        ['label' => 'Bronnen en onderzoek', 'url' => home_url('/bronnen/')],
+        ['label' => 'Stamboom', 'url' => home_url('/tree/')],
+        ['label' => 'Archief', 'url' => home_url('/archief/')],
+        ['label' => 'Contact', 'url' => home_url('/contact/')],
     ];
 
-    echo '<ul>';
+    echo '<ul class="site-nav__list">';
     foreach ($items as $item) {
         printf(
             '<li><a href="%s">%s</a></li>',
