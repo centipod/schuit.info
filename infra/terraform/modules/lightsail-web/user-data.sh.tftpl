@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y \
+  awscli \
+  ca-certificates \
+  certbot \
+  nginx \
+  php-cli \
+  php-curl \
+  php-fpm \
+  php-gd \
+  php-intl \
+  php-mbstring \
+  php-mysql \
+  php-xml \
+  php-zip \
+  rsync \
+  unzip \
+  mariadb-server
+
+systemctl enable nginx
+systemctl enable mariadb
+
+mkdir -p \
+  /opt/genealogy/backup \
+  /opt/genealogy/deploy \
+  /opt/genealogy/import \
+  /opt/genealogy/maintenance \
+  /var/backups/genealogy \
+  /var/private/gedcom-archive \
+  /var/private/gedcom-staging \
+  /var/www/current \
+  /var/www/releases \
+  /var/www/shared/env \
+  /var/www/shared/webtrees/config \
+  /var/www/shared/webtrees/data \
+  /var/www/shared/webtrees/media \
+  /var/www/shared/wordpress/wp-content/uploads
+
+cat >/var/www/shared/env/portal.env <<EOF
+PROJECT_NAME="${project_name}"
+ENVIRONMENT="${environment}"
+DOMAIN_NAME="${domain_name}"
+AWS_REGION="${aws_region}"
+BACKUP_BUCKET="${backup_bucket_name}"
+EOF
+
+chmod 0640 /var/www/shared/env/portal.env
+chmod 0750 /var/backups/genealogy /var/private/gedcom-archive /var/private/gedcom-staging

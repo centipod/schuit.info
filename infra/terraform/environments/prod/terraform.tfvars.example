@@ -1,0 +1,21 @@
+aws_region              = "eu-west-1"
+project_name            = "schuit-info"
+environment             = "prod"
+domain_name             = "stichtingschu-y-i-ij-t.nl"
+manage_route53_zone     = true
+lightsail_availability_zone = "eu-west-1a"
+lightsail_blueprint_id  = "ubuntu_24_04"
+lightsail_bundle_id     = "YOUR_LIGHTSAIL_BUNDLE_ID"
+lightsail_key_pair_name = "YOUR_LIGHTSAIL_KEY_PAIR"
+instance_name           = "schuit-info-prod"
+static_ip_name          = "schuit-info-prod-ip"
+backup_bucket_name      = "schuit-info-backups"
+backup_iam_user_name    = "schuit-info-backup-writer"
+backup_retention_days   = 30
+backup_noncurrent_retention_days = 30
+
+ssh_cidrs = ["YOUR_OFFICE_OR_HOME_PUBLIC_IP/32"]
+
+tags = {
+  Owner = "schuit"
+}

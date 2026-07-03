@@ -1,0 +1,8 @@
+aws_region        = "eu-west-1"
+project_name      = "schuit-info"
+state_bucket_name  = "schuit-info-terraform-state"
+lock_table_name    = "schuit-info-terraform-locks"
+
+tags = {
+  Owner = "schuit"
+}
