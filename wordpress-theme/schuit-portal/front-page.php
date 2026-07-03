@@ -45,7 +45,6 @@ get_header();
       <?php foreach ($news_cards as $card) : ?>
         <article class="news-card card">
           <a class="news-card__link" href="<?php echo esc_url($card['url']); ?>">
-            <div class="news-card__media" aria-hidden="true"></div>
             <div class="news-card__body">
               <p class="news-card__eyebrow"><?php echo esc_html($card['eyebrow']); ?></p>
               <h3><?php echo esc_html($card['title']); ?></h3>
@@ -101,7 +100,6 @@ get_header();
     <div class="story-grid">
       <?php foreach ($story_cards as $card) : ?>
         <article class="story-card card">
-          <div class="story-card__media" aria-hidden="true"></div>
           <div class="story-card__body">
             <p class="story-card__eyebrow"><?php echo esc_html($card['eyebrow']); ?></p>
             <h3><?php echo esc_html($card['title']); ?></h3>
