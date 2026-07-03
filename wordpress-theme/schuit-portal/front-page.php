@@ -20,20 +20,6 @@ get_header();
         <a class="button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open de stamboom</a>
         <a class="button button--ghost button--ghost-dark" href="<?php echo esc_url(home_url('/schuit/?cat=5')); ?>">Bekijk publicaties</a>
       </div>
-      <ul class="home-hero__stats" aria-label="Snelkoppelingen">
-        <li>
-          <strong>Genealogie</strong>
-          <span>webtrees</span>
-        </li>
-        <li>
-          <strong>Publicaties</strong>
-          <span>Nieuwsbrief & archief</span>
-        </li>
-        <li>
-          <strong>Contact</strong>
-          <span>jan@schuit.info</span>
-        </li>
-      </ul>
     </div>
 
     <div class="home-hero__visual card">
@@ -59,7 +45,7 @@ get_header();
       <?php foreach ($news_cards as $card) : ?>
         <article class="news-card card">
           <a class="news-card__link" href="<?php echo esc_url($card['url']); ?>">
-            <div class="news-card__media" style="background-image: linear-gradient(180deg, rgba(19, 38, 63, 0.05), rgba(19, 38, 63, 0.18)), url('<?php echo esc_url($card['image']); ?>');"></div>
+            <div class="news-card__media" aria-hidden="true"></div>
             <div class="news-card__body">
               <p class="news-card__eyebrow"><?php echo esc_html($card['eyebrow']); ?></p>
               <h3><?php echo esc_html($card['title']); ?></h3>
@@ -115,7 +101,7 @@ get_header();
     <div class="story-grid">
       <?php foreach ($story_cards as $card) : ?>
         <article class="story-card card">
-          <div class="story-card__media" style="background-image: linear-gradient(180deg, rgba(247, 243, 236, 0.08), rgba(19, 38, 63, 0.14)), url('<?php echo esc_url($card['image']); ?>');"></div>
+          <div class="story-card__media" aria-hidden="true"></div>
           <div class="story-card__body">
             <p class="story-card__eyebrow"><?php echo esc_html($card['eyebrow']); ?></p>
             <h3><?php echo esc_html($card['title']); ?></h3>

@@ -21,6 +21,23 @@ function schuit_portal_assets(): void {
 }
 add_action('wp_enqueue_scripts', 'schuit_portal_assets');
 
+function schuit_portal_primary_menu_items(string $items, $args): string {
+    if (!isset($args->theme_location) || $args->theme_location !== 'primary') {
+        return $items;
+    }
+
+    $extra_items = sprintf(
+        '<li><a href="%s">%s</a></li><li><a href="%s">%s</a></li>',
+        esc_url(home_url('/tree/')),
+        esc_html__('Genealogie', 'schuit-portal'),
+        esc_url(home_url('/schuit/?cat=5')),
+        esc_html__('Publicaties', 'schuit-portal')
+    );
+
+    return $items . $extra_items;
+}
+add_filter('wp_nav_menu_items', 'schuit_portal_primary_menu_items', 10, 2);
+
 function schuit_portal_card_excerpt(string $content, int $words = 24): string {
     $excerpt = trim(wp_strip_all_tags($content));
 
@@ -29,12 +46,6 @@ function schuit_portal_card_excerpt(string $content, int $words = 24): string {
     }
 
     return wp_trim_words($excerpt, $words, '…');
-}
-
-function schuit_portal_card_image_url(int $post_id, string $fallback): string {
-    $thumbnail = get_the_post_thumbnail_url($post_id, 'large');
-
-    return $thumbnail ?: $fallback;
 }
 
 function schuit_portal_home_news_cards(int $limit = 3): array {
@@ -54,7 +65,6 @@ function schuit_portal_home_news_cards(int $limit = 3): array {
                 'title' => get_the_title($post_id),
                 'text' => schuit_portal_card_excerpt(get_the_content('', false, $post_id), 26),
                 'url' => get_permalink($post_id),
-                'image' => schuit_portal_card_image_url($post_id, home_url('/banner.png')),
             ];
         }
 
@@ -71,21 +81,18 @@ function schuit_portal_home_news_cards(int $limit = 3): array {
             'title' => 'Familie Reünie 2024 in Hoorn',
             'text' => 'Plannen voor een volgende familie-bijeenkomst blijven hier als achtergrondinformatie beschikbaar.',
             'url' => home_url('/schuit/?cat=5'),
-            'image' => home_url('/banner.png'),
         ],
         [
             'eyebrow' => '27 april 2024',
             'title' => 'Nieuwe documenten toegevoegd',
             'text' => 'Historische documenten en foto’s uit het archief worden stapsgewijs samengebracht in het portal.',
             'url' => home_url('/schuit/?cat=5'),
-            'image' => home_url('/logo.png'),
         ],
         [
             'eyebrow' => '12 maart 2024',
             'title' => 'Schuit schepen en onze geschiedenis',
             'text' => 'De maritieme geschiedenis en familieverhalen blijven belangrijke ankerpunten binnen het project.',
             'url' => home_url('/schuit/?cat=5'),
-            'image' => home_url('/banner.png'),
         ],
     ], 0, $limit);
 }
@@ -95,17 +102,14 @@ function schuit_portal_home_story_cards(): array {
         [
             'slug' => 'verhalen',
             'eyebrow' => 'Verhalen',
-            'image' => home_url('/banner.png'),
         ],
         [
             'slug' => 'familietakken',
             'eyebrow' => 'Stamboom',
-            'image' => home_url('/logo.png'),
         ],
         [
             'slug' => 'archief',
             'eyebrow' => 'Archief',
-            'image' => home_url('/banner.png'),
         ],
     ];
 
@@ -127,7 +131,6 @@ function schuit_portal_home_story_cards(): array {
                 'title' => $title,
                 'text' => schuit_portal_card_excerpt((string) $content, 24),
                 'url' => get_permalink($page),
-                'image' => schuit_portal_card_image_url($page->ID, $spec['image']),
             ];
 
             continue;
@@ -139,7 +142,6 @@ function schuit_portal_home_story_cards(): array {
             'title' => $fallback['title'] ?: ucfirst($spec['slug']),
             'text' => schuit_portal_card_excerpt($fallback['content'], 24),
             'url' => home_url('/' . $spec['slug'] . '/'),
-            'image' => $spec['image'],
         ];
     }
 
@@ -150,6 +152,8 @@ function schuit_portal_fallback_menu(): void {
     $items = [
         ['label' => 'Home', 'url' => home_url('/')],
         ['label' => 'Nieuws', 'url' => home_url('/?post_type=post')],
+        ['label' => 'Genealogie', 'url' => home_url('/tree/')],
+        ['label' => 'Publicaties', 'url' => home_url('/schuit/?cat=5')],
         ['label' => 'Verhalen', 'url' => home_url('/verhalen/')],
         ['label' => 'Stamboom', 'url' => home_url('/tree/')],
         ['label' => 'Archief', 'url' => home_url('/archief/')],
