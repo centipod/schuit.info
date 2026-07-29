@@ -93,7 +93,7 @@ variable "backup_noncurrent_retention_days" {
 }
 
 variable "ssh_cidrs" {
-  description = "CIDR ranges allowed to reach SSH on the instance."
+  description = "CIDR ranges allowed to reach SSH on the instance. For production, restrict to your office/home IP."
   type        = list(string)
   default     = ["0.0.0.0/0", "::/0"]
 }

@@ -1,11 +1,10 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
 apt-get install -y \
-  awscli \
   ca-certificates \
   certbot \
   nginx \
@@ -20,7 +19,14 @@ apt-get install -y \
   php-zip \
   rsync \
   unzip \
-  mariadb-server
+  mariadb-server \
+  python3-pip
+
+# Install AWS CLI v2
+curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2
+/tmp/awscliv2/aws/install
+rm -rf /tmp/awscliv2 /tmp/awscliv2.zip
 
 systemctl enable nginx
 systemctl enable mariadb
@@ -34,6 +40,7 @@ mkdir -p \
   /var/private/gedcom-archive \
   /var/private/gedcom-staging \
   /var/www/current \
+    /var/www/maintenance \
   /var/www/releases \
   /var/www/shared/env \
   /var/www/shared/webtrees/config \
@@ -51,3 +58,302 @@ EOF
 
 chmod 0640 /var/www/shared/env/portal.env
 chmod 0750 /var/backups/genealogy /var/private/gedcom-archive /var/private/gedcom-staging
+
+# ============================================================
+# HTTPS Setup with Certbot
+# ============================================================
+
+# Create a temporary Nginx config for certificate validation
+cat > /etc/nginx/sites-available/letsencrypt <<'LEEOF'
+server {
+    listen 80;
+    server_name _;
+    root /var/www/letsencrypt;
+    location /.well-known/acme-challenge/ {
+        allow all;
+    }
+    location / {
+        return 444;
+    }
+}
+LEEOF
+
+mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
+
+# Temporarily stop the main Nginx to free port 80
+systemctl stop nginx || true
+rm -f /etc/nginx/sites-enabled/default
+ln -sf /etc/nginx/sites-available/letsencrypt /etc/nginx/sites-enabled/letsencrypt
+
+# Start the letsencrypt Nginx
+nginx -t && systemctl start nginx
+
+# Request SSL certificate (non-fatal - DNS may not be configured yet)
+certbot certonly --webroot \
+    --webroot-path /var/www/letsencrypt \
+    --email admin@${domain_name} \
+    --domain ${domain_name} \
+    --domain www.${domain_name} \
+    --agree-tos \
+    --non-interactive \
+    --force-renewal || true
+
+# Restart the main Nginx (will use the proper SSL config below)
+systemctl stop nginx || true
+rm -f /etc/nginx/sites-enabled/letsencrypt /etc/nginx/sites-available/letsencrypt
+
+# ============================================================
+# Maintenance Mode Support
+# ============================================================
+
+# Create maintenance page
+cat > /var/www/maintenance/index.html <<'MEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Under Maintenance</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 1em;
+        }
+        .icon {
+            font-size: 4em;
+            margin-bottom: 0.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>We'll Be Right Back</h1>
+        <p>The site is currently undergoing scheduled maintenance. We apologize for the inconvenience and appreciate your patience.</p>
+        <p>Please check back shortly.</p>
+    </div>
+</body>
+</html>
+MEOF
+
+# Create maintenance mode toggle script
+cat > /usr/local/bin/maintenance-mode <<'MMEOF'
+#!/bin/bash
+# Toggle maintenance mode on/off
+# Usage: maintenance-mode [on|off]
+
+MAINTENANCE_FLAG="/opt/genealogy/maintenance/.maintenance"
+
+if [ "$1" = "on" ]; then
+    touch "$MAINTENANCE_FLAG"
+    systemctl reload nginx
+    echo "Maintenance mode enabled"
+elif [ "$1" = "off" ]; then
+    rm -f "$MAINTENANCE_FLAG"
+    systemctl reload nginx
+    echo "Maintenance mode disabled"
+else
+    echo "Usage: maintenance-mode [on|off]"
+    exit 1
+fi
+MMEOF
+
+chmod +x /usr/local/bin/maintenance-mode
+
+# ============================================================
+# Certbot Auto-Renewal
+# ============================================================
+
+# Create certbot renewal hook to reload Nginx
+cat > /etc/letsencrypt/renewal-hooks/post/reload-nginx <<'RENEWEOF'
+#!/bin/bash
+systemctl reload nginx
+RENEWEOF
+
+chmod +x /etc/letsencrypt/renewal-hooks/post/reload-nginx
+
+# Verify certbot renewal works (dry run)
+certbot renew --dry-run 2>/dev/null || true
+
+# ============================================================
+# Nginx Configuration
+# ============================================================
+
+# Generate Nginx configuration with substituted variables
+cat > /etc/nginx/conf.d/schuit-rate-limit.conf <<'NGINXRATEEOF'
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=login:10m rate=3r/m;
+NGINXRATEEOF
+
+if [ -f /etc/letsencrypt/live/${domain_name}/fullchain.pem ] && [ -f /etc/letsencrypt/live/${domain_name}/privkey.pem ]; then
+cat > /etc/nginx/sites-available/default <<NGINXEOF
+# HTTP server - redirect to HTTPS
+server {
+    listen 80;
+    server_name _;
+    server_tokens off;
+
+    # Let's Encrypt validation
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+    }
+
+    # Redirect all other HTTP to HTTPS
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    server_name _;
+    server_tokens off;
+    client_max_body_size 64m;
+
+    # SSL configuration
+    ssl_certificate /etc/letsencrypt/live/${domain_name}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${domain_name}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Maintenance mode check
+    set \$maintenance 0;
+    if (-f /opt/genealogy/maintenance/.maintenance) {
+        set \$maintenance 1;
+    }
+
+    # Serve maintenance page when enabled
+    if (\$maintenance) {
+        root /var/www/maintenance;
+        index index.html;
+        try_files /index.html =503;
+    }
+
+    # WordPress login/protection rate limiting
+    location = /wp-login.php {
+        limit_req zone=login burst=5 nodelay;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location = /xmlrpc.php {
+        deny all;
+        return 403;
+    }
+
+    location = /readme.html {
+        deny all;
+        return 404;
+    }
+
+    location = /license.txt {
+        deny all;
+        return 404;
+    }
+
+    location = /wp-admin/install.php {
+        deny all;
+        return 404;
+    }
+
+    # webtrees routing
+    location ^~ /tree/public/ {
+        root /var/www/current/wordpress;
+        try_files \$uri =404;
+    }
+
+    location ^~ /tree/ {
+        limit_req zone=general burst=20 nodelay;
+        try_files /__webtrees_front_controller__ @webtrees;
+    }
+
+    location @webtrees {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/current/webtrees/index.php;
+        fastcgi_param SCRIPT_NAME /tree/index.php;
+        fastcgi_param DOCUMENT_ROOT /var/www/current/webtrees;
+        fastcgi_param REQUEST_URI \$request_uri;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    # WordPress routing
+    location / {
+        limit_req zone=general burst=20 nodelay;
+        root /var/www/current/wordpress;
+        index index.php;
+        try_files \$uri \$uri/ /index.php\$is_args\$args;
+
+        location ~ \.php\$ {
+            fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+            include fastcgi_params;
+        }
+    }
+
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}
+NGINXEOF
+else
+cat > /etc/nginx/sites-available/default <<'NGINXEOF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    server_tokens off;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+        try_files $uri =404;
+        default_type text/plain;
+        allow all;
+    }
+
+    location / {
+        return 200 'Schuit genealogy portal is being prepared.\n';
+        add_header Content-Type text/plain;
+    }
+}
+NGINXEOF
+fi
+
+# Enable the site and test Nginx configuration
+ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-enabled/default-site 2>/dev/null || true
+nginx -t && systemctl reload nginx

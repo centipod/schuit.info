@@ -7,6 +7,7 @@ provider "aws" {
         Project     = var.project_name
         Environment = var.environment
         ManagedBy   = "terraform"
+        "schuit.info" = ""
       },
       var.tags
     )
@@ -19,6 +20,7 @@ locals {
       Project     = var.project_name
       Environment = var.environment
       ManagedBy   = "terraform"
+      "schuit.info" = ""
     },
     var.tags
   )
