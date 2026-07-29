@@ -10,4 +10,4 @@ fi
 
 docker compose up -d --build
 
-echo "Stack is starting on http://localhost:${LOCAL_PORT:-8080}"
+echo "Stack is starting on http://localhost:${LOCAL_PORT:-8081}"

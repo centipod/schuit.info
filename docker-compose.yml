@@ -8,6 +8,12 @@ services:
       - "${LOCAL_PORT:-8081}:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   wordpress-db:
     image: mysql:8.4.5
@@ -19,11 +25,18 @@ services:
       MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_ROOT_PASSWORD:-wordpress-root-pass}
     volumes:
       - wordpress-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${WORDPRESS_DB_ROOT_PASSWORD:-wordpress-root-pass}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   wordpress:
-    image: ${WORDPRESS_IMAGE:-wordpress:latest}
+    image: ${WORDPRESS_IMAGE:-wordpress:6.8-php8.3-apache}
     depends_on:
-      - wordpress-db
+      wordpress-db:
+        condition: service_healthy
     environment:
       WORDPRESS_DB_HOST: wordpress-db:3306
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
@@ -40,6 +53,12 @@ services:
       - ./wordpress-mu-plugins:/var/www/html/wp-content/mu-plugins:ro
       - ./logo.png:/var/www/html/logo.png:ro
       - ./banner.png:/var/www/html/banner.png:ro
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'require \"wp-includes/version.php\"; exit(0);' || exit(1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   webtrees-db:
     image: mysql:8.4.5
@@ -51,14 +70,21 @@ services:
       MYSQL_ROOT_PASSWORD: ${WEBTREES_DB_ROOT_PASSWORD:-webtrees-root-pass}
     volumes:
       - webtrees-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${WEBTREES_DB_ROOT_PASSWORD:-webtrees-root-pass}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   webtrees:
     build:
       context: ./docker/webtrees
       args:
-        WEBTREES_VERSION: ${WEBTREES_VERSION:-2.1.27}
+        WEBTREES_VERSION: ${WEBTREES_VERSION:-2.2.6}
     depends_on:
-      - webtrees-db
+      webtrees-db:
+        condition: service_healthy
     environment:
       WEBTREES_DB_HOST: webtrees-db:3306
       WEBTREES_DB_NAME: ${WEBTREES_DB_NAME:-webtrees}
@@ -71,6 +97,12 @@ services:
       - webtrees-media:/var/www/html/media
       - webtrees-config:/var/www/html/config
       - ./modules_v4:/var/www/html/modules_v4:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
 volumes:
   wordpress-db:
