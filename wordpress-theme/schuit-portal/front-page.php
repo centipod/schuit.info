@@ -1,114 +1,112 @@
 <?php
 declare(strict_types=1);
 /** @var array<int, array<string, string>> $news_cards */
-/** @var array<int, array<string, string>> $story_cards */
 
-$news_cards = schuit_portal_home_news_cards(3);
-$story_cards = schuit_portal_home_story_cards();
+$news_cards = schuit_portal_home_news_cards(2);
+$metrics = schuit_portal_webtrees_metrics();
+$feature_cards = [
+    [
+        'label' => 'Stamboom',
+        'title' => 'Stamboom',
+        'text' => 'Onderzoek personen, families en familietakken in de online stamboom.',
+        'url' => home_url('/tree/'),
+        'cta' => 'Naar de stamboom',
+    ],
+    [
+        'label' => 'Publicaties',
+        'title' => 'Verhalen en publicaties',
+        'text' => 'Lees familieverhalen en raadpleeg eerder uitgegeven publicaties.',
+        'url' => home_url('/schuit/?cat=5'),
+        'cta' => 'Bekijk publicaties',
+    ],
+    [
+        'label' => 'Archief',
+        'title' => 'Beeld en archief',
+        'text' => 'Bekijk beschikbare foto’s, documenten en andere historische bronnen.',
+        'url' => home_url('/archief/'),
+        'cta' => 'Naar het archief',
+    ],
+];
 
 get_header();
 ?>
-<main class="site-main site-main--home schuit-shell">
-  <section class="home-hero">
-    <div class="home-hero__copy">
-      <p class="home-hero__eyebrow">Stichting Schu-y-i-ij-t</p>
-      <h1>De Stichting verzamelt gegevens, feiten, verhalen en beelden.</h1>
-      <p class="home-hero__lede">
-        Daarmee wil de Stichting uiteindelijk de geschiedenis van alle geslachten met de naam Schuyt, Schuit of Schuijt en/of namen waarin dit woord voorkomt, vastleggen. Tevens zet zij zich in voor het leggen van contacten en het onderhouden van netwerken tussen personen met deze namen.
-      </p>
-      <div class="home-hero__actions">
+<main class="site-main site-main--home archive-home">
+  <section class="archive-hero">
+    <div class="archive-hero__copy">
+      <h1>Familiegeschiedenis zorgvuldig bewaard</h1>
+      <p>Stichting Schu-y-i-ij-t verzamelt en bewaart gegevens, verhalen, beelden en publicaties over families met de naam Schuyt, Schuit, Schuijt en verwante namen.</p>
+      <div class="archive-hero__actions">
         <a class="button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open de stamboom</a>
-        <a class="button button--ghost button--ghost-dark" href="<?php echo esc_url(home_url('/schuit/?cat=5')); ?>">Bekijk publicaties</a>
+        <a class="button button--ghost" href="<?php echo esc_url(home_url('/schuit/?cat=5')); ?>">Bekijk het familiearchief</a>
       </div>
     </div>
-
-    <div class="home-hero__visual card">
-      <img class="home-hero__image" src="<?php echo esc_url(home_url('/banner.png')); ?>" alt="" loading="eager">
-      <div class="home-hero__badge">
-        <span class="home-hero__badge-label">Familiearchief</span>
-        <strong>Stamboom, publicaties en bronnen op één plek.</strong>
-        <p>Een rustige, toegankelijke ingang voor familieonderzoek en archiefmateriaal.</p>
-      </div>
+    <div class="archive-hero__image" aria-hidden="true">
+      <img src="<?php echo esc_url(home_url('/banner.png')); ?>" alt="" loading="eager">
     </div>
   </section>
 
-  <section class="home-section">
-    <div class="section-head section-head--split">
-      <div>
-        <p class="section-head__eyebrow">Recent nieuws</p>
-        <h2>Nieuws</h2>
-      </div>
-      <a class="section-head__link" href="<?php echo esc_url(home_url('/?post_type=post')); ?>">Bekijk alle nieuws</a>
+  <section class="archive-metrics" aria-label="Gegevens uit de stamboom">
+    <div class="archive-metric">
+      <span class="archive-metric__icon">P</span>
+      <strong><?php echo esc_html(schuit_portal_metric_value($metrics['individuals'])); ?></strong>
+      <span>Personen</span>
     </div>
+    <div class="archive-metric">
+      <span class="archive-metric__icon">F</span>
+      <strong><?php echo esc_html(schuit_portal_metric_value($metrics['families'])); ?></strong>
+      <span>Families</span>
+    </div>
+    <div class="archive-metric">
+      <span class="archive-metric__icon">L</span>
+      <strong><?php echo esc_html(schuit_portal_metric_value($metrics['places'])); ?></strong>
+      <span>Plaatsen</span>
+    </div>
+    <div class="archive-metric">
+      <span class="archive-metric__icon">T</span>
+      <strong><?php echo esc_html(schuit_portal_metric_value($metrics['trees'])); ?></strong>
+      <span>Stamboom</span>
+    </div>
+  </section>
 
-    <div class="news-grid">
-      <?php foreach ($news_cards as $card) : ?>
-        <article class="news-card card">
-          <a class="news-card__link" href="<?php echo esc_url($card['url']); ?>">
-            <div class="news-card__body">
-              <p class="news-card__eyebrow"><?php echo esc_html($card['eyebrow']); ?></p>
+  <section class="archive-feature-grid" aria-label="Belangrijke ingangen">
+    <?php foreach ($feature_cards as $card) : ?>
+      <article class="archive-feature-card">
+        <span class="archive-feature-card__mark"><?php echo esc_html(substr($card['label'], 0, 1)); ?></span>
+        <h2><?php echo esc_html($card['title']); ?></h2>
+        <p><?php echo esc_html($card['text']); ?></p>
+        <a href="<?php echo esc_url($card['url']); ?>"><?php echo esc_html($card['cta']); ?></a>
+      </article>
+    <?php endforeach; ?>
+  </section>
+
+  <section class="archive-lower-grid">
+    <div class="archive-news">
+      <div class="archive-section-head">
+        <h2>Laatste nieuws</h2>
+      </div>
+      <div class="archive-news__list">
+        <?php foreach ($news_cards as $card) : ?>
+          <article class="archive-news-item">
+            <div class="archive-news-item__thumb" aria-hidden="true"></div>
+            <div>
               <h3><?php echo esc_html($card['title']); ?></h3>
+              <time><?php echo esc_html($card['eyebrow']); ?></time>
               <p><?php echo esc_html($card['text']); ?></p>
-              <span class="news-card__cta">Lees meer</span>
+              <a href="<?php echo esc_url($card['url']); ?>">Lees verder</a>
             </div>
-          </a>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  </section>
-
-  <section class="family-band card">
-    <div class="family-band__art" aria-hidden="true">
-      <img src="<?php echo esc_url(home_url('/logo.png')); ?>" alt="" loading="lazy">
-    </div>
-    <div class="family-band__content">
-      <p class="section-head__eyebrow">Stamboom - webtrees</p>
-      <h2>Stamboom - webtrees</h2>
-      <p>In dit bestand staan de gegevens van de naam SCHUIT in alle variaties. Bijna 88.000 personen. Wel met in achtneming van de privacyregels. Dat betekent 100 jaar voor de geboortes, 75 jaar voor de huwelijken en 50 jaar voor de overlijdens.</p>
-      <div class="home-hero__actions">
-        <a class="button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open webtrees</a>
-        <a class="button button--ghost button--ghost-dark" href="mailto:jan@schuit.info">Neem contact op</a>
+          </article>
+        <?php endforeach; ?>
       </div>
+      <a class="button button--ghost archive-news__all" href="<?php echo esc_url(home_url('/?post_type=post')); ?>">Bekijk al het nieuws</a>
     </div>
-    <div class="family-band__list-wrap">
-      <ul class="family-band__list">
-        <li>
-          <strong>Privacy</strong>
-          <span>Levensdata zijn afgeschermd volgens de geldende regels.</span>
-        </li>
-        <li>
-          <strong>Nauwkeurig</strong>
-          <span>Onderzoek en bronnen worden zorgvuldig bijgehouden.</span>
-        </li>
-        <li>
-          <strong>Levend archief</strong>
-          <span>Familiegeschiedenis blijft zichtbaar voor volgende generaties.</span>
-        </li>
-      </ul>
-    </div>
-  </section>
 
-  <section class="home-section">
-    <div class="section-head section-head--split">
-      <div>
-        <p class="section-head__eyebrow">Uitgelichte verhalen</p>
-        <h2>Verhalen en archief</h2>
+    <aside class="archive-about">
+      <div class="archive-section-head">
+        <h2>Over de stichting</h2>
       </div>
-      <a class="section-head__link" href="<?php echo esc_url(home_url('/verhalen/')); ?>">Bekijk alles</a>
-    </div>
-
-    <div class="story-grid">
-      <?php foreach ($story_cards as $card) : ?>
-        <article class="story-card card">
-          <div class="story-card__body">
-            <p class="story-card__eyebrow"><?php echo esc_html($card['eyebrow']); ?></p>
-            <h3><?php echo esc_html($card['title']); ?></h3>
-            <p><?php echo esc_html($card['text']); ?></p>
-            <a class="story-card__cta" href="<?php echo esc_url($card['url']); ?>">Lees verder</a>
-          </div>
-        </article>
-      <?php endforeach; ?>
-    </div>
+      <p>De stichting legt de geschiedenis vast van families met de naam Schuyt, Schuit, Schuijt en verwante familienamen. Zij beheert genealogische gegevens, publicaties, verhalen en historische beelden, en bevordert contact tussen onderzoekers en familieleden.</p>
+      <a href="<?php echo esc_url(home_url('/over/')); ?>">Lees meer over de stichting</a>
+    </aside>
   </section>
 </main>
 <?php get_footer(); ?>

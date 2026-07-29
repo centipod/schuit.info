@@ -148,6 +148,100 @@ function schuit_portal_home_story_cards(): array {
     return $cards;
 }
 
+function schuit_portal_webtrees_config(): array {
+    $config = [
+        'host' => getenv('WEBTREES_DB_HOST') ?: '',
+        'port' => getenv('WEBTREES_DB_PORT') ?: '3306',
+        'user' => getenv('WEBTREES_DB_USER') ?: '',
+        'password' => getenv('WEBTREES_DB_PASSWORD') ?: '',
+        'name' => getenv('WEBTREES_DB_NAME') ?: '',
+        'prefix' => getenv('WEBTREES_TABLE_PREFIX') ?: 'wt_',
+    ];
+
+    $config_path = getenv('WEBTREES_CONFIG_PATH') ?: '/var/www/shared/webtrees/data/config.ini.php';
+    if (is_readable($config_path)) {
+        $parsed = parse_ini_file($config_path, false, INI_SCANNER_RAW);
+        if (is_array($parsed)) {
+            $config = [
+                'host' => (string) ($parsed['dbhost'] ?? $config['host']),
+                'port' => (string) ($parsed['dbport'] ?? $config['port']),
+                'user' => (string) ($parsed['dbuser'] ?? $config['user']),
+                'password' => (string) ($parsed['dbpass'] ?? $config['password']),
+                'name' => (string) ($parsed['dbname'] ?? $config['name']),
+                'prefix' => (string) ($parsed['tblpfx'] ?? $config['prefix']),
+            ];
+        }
+    }
+
+    return $config;
+}
+
+function schuit_portal_webtrees_count(mysqli $connection, string $query): ?int {
+    $result = $connection->query($query);
+    if (!$result instanceof mysqli_result) {
+        return null;
+    }
+
+    $row = $result->fetch_row();
+    $result->free();
+
+    return isset($row[0]) ? (int) $row[0] : null;
+}
+
+function schuit_portal_webtrees_metrics(): array {
+    $cached = get_transient('schuit_portal_webtrees_metrics');
+    if (is_array($cached)) {
+        return $cached;
+    }
+
+    $metrics = [
+        'individuals' => null,
+        'families' => null,
+        'places' => null,
+        'trees' => null,
+    ];
+
+    if (!class_exists('mysqli')) {
+        return $metrics;
+    }
+
+    $config = schuit_portal_webtrees_config();
+    if ($config['host'] === '' || $config['user'] === '' || $config['name'] === '') {
+        return $metrics;
+    }
+
+    $prefix = preg_replace('/[^A-Za-z0-9_]/', '', $config['prefix']);
+    if (!is_string($prefix) || $prefix === '') {
+        $prefix = 'wt_';
+    }
+
+    mysqli_report(MYSQLI_REPORT_OFF);
+    $connection = @new mysqli($config['host'], $config['user'], $config['password'], $config['name'], (int) $config['port']);
+    if ($connection->connect_errno !== 0) {
+        return $metrics;
+    }
+
+    $connection->set_charset('utf8mb4');
+
+    $metrics['individuals'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(*) FROM `{$prefix}individuals`");
+    $metrics['families'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(*) FROM `{$prefix}families`");
+    $metrics['places'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(DISTINCT p_place) FROM `{$prefix}places`");
+    $metrics['trees'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(DISTINCT i_file) FROM `{$prefix}individuals`");
+
+    $connection->close();
+    set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
+
+    return $metrics;
+}
+
+function schuit_portal_metric_value(?int $value): string {
+    if ($value === null) {
+        return '...';
+    }
+
+    return number_format_i18n($value);
+}
+
 function schuit_portal_fallback_menu(): void {
     $items = [
         ['label' => 'Home', 'url' => home_url('/')],
