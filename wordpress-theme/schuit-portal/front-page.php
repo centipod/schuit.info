@@ -16,14 +16,14 @@ $feature_cards = [
         'label' => 'Publicaties',
         'title' => 'Verhalen en publicaties',
         'text' => 'Lees familieverhalen en raadpleeg eerder uitgegeven publicaties.',
-        'url' => home_url('/schuit/?cat=5'),
+        'url' => schuit_portal_category_url('publicaties', 5),
         'cta' => 'Bekijk publicaties',
     ],
     [
         'label' => 'Archief',
         'title' => 'Beeld en archief',
         'text' => 'Bekijk beschikbare foto’s, documenten en andere historische bronnen.',
-        'url' => home_url('/archief/'),
+        'url' => schuit_portal_page_url('van-der-schuit', '/?page_id=225'),
         'cta' => 'Naar het archief',
     ],
 ];
@@ -37,7 +37,7 @@ get_header();
       <p>Stichting Schu-y-i-ij-t verzamelt en bewaart gegevens, verhalen, beelden en publicaties over families met de naam Schuyt, Schuit, Schuijt en verwante namen.</p>
       <div class="archive-hero__actions">
         <a class="button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open de stamboom</a>
-        <a class="button button--ghost" href="<?php echo esc_url(home_url('/schuit/?cat=5')); ?>">Bekijk het familiearchief</a>
+        <a class="button button--ghost" href="<?php echo esc_url(schuit_portal_category_url('publicaties', 5)); ?>">Bekijk het familiearchief</a>
       </div>
     </div>
     <div class="archive-hero__image" aria-hidden="true">
@@ -97,7 +97,7 @@ get_header();
           </article>
         <?php endforeach; ?>
       </div>
-      <a class="button button--ghost archive-news__all" href="<?php echo esc_url(home_url('/?post_type=post')); ?>">Bekijk al het nieuws</a>
+      <a class="button button--ghost archive-news__all" href="<?php echo esc_url(schuit_portal_category_url('nieuws', 1)); ?>">Bekijk al het nieuws</a>
     </div>
 
     <aside class="archive-about">
@@ -105,7 +105,7 @@ get_header();
         <h2>Over de stichting</h2>
       </div>
       <p>De stichting legt de geschiedenis vast van families met de naam Schuyt, Schuit, Schuijt en verwante familienamen. Zij beheert genealogische gegevens, publicaties, verhalen en historische beelden, en bevordert contact tussen onderzoekers en familieleden.</p>
-      <a href="<?php echo esc_url(home_url('/over/')); ?>">Lees meer over de stichting</a>
+      <a href="<?php echo esc_url(schuit_portal_page_url('about', '/?page_id=2')); ?>">Lees meer over de stichting</a>
     </aside>
   </section>
 </main>

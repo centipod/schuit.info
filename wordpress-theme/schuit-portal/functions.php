@@ -21,23 +21,6 @@ function schuit_portal_assets(): void {
 }
 add_action('wp_enqueue_scripts', 'schuit_portal_assets');
 
-function schuit_portal_primary_menu_items(string $items, $args): string {
-    if (!isset($args->theme_location) || $args->theme_location !== 'primary') {
-        return $items;
-    }
-
-    $extra_items = sprintf(
-        '<li><a href="%s">%s</a></li><li><a href="%s">%s</a></li>',
-        esc_url(home_url('/tree/')),
-        esc_html__('Genealogie', 'schuit-portal'),
-        esc_url(home_url('/schuit/?cat=5')),
-        esc_html__('Publicaties', 'schuit-portal')
-    );
-
-    return $items . $extra_items;
-}
-add_filter('wp_nav_menu_items', 'schuit_portal_primary_menu_items', 10, 2);
-
 function schuit_portal_card_excerpt(string $content, int $words = 24): string {
     $excerpt = trim(wp_strip_all_tags($content));
 
@@ -242,16 +225,36 @@ function schuit_portal_metric_value(?int $value): string {
     return number_format_i18n($value);
 }
 
+function schuit_portal_page_url(string $slug, string $fallback): string {
+    $page = get_page_by_path($slug);
+
+    if ($page instanceof WP_Post) {
+        return get_permalink($page);
+    }
+
+    return home_url($fallback);
+}
+
+function schuit_portal_category_url(string $slug, int $fallback_id): string {
+    $category = get_category_by_slug($slug);
+
+    if ($category instanceof WP_Term) {
+        $url = get_category_link($category);
+        if (!is_wp_error($url)) {
+            return $url;
+        }
+    }
+
+    return add_query_arg('cat', (string) $fallback_id, home_url('/'));
+}
+
 function schuit_portal_fallback_menu(): void {
     $items = [
         ['label' => 'Home', 'url' => home_url('/')],
-        ['label' => 'Nieuws', 'url' => home_url('/?post_type=post')],
-        ['label' => 'Genealogie', 'url' => home_url('/tree/')],
-        ['label' => 'Publicaties', 'url' => home_url('/schuit/?cat=5')],
-        ['label' => 'Verhalen', 'url' => home_url('/verhalen/')],
-        ['label' => 'Stamboom', 'url' => home_url('/tree/')],
-        ['label' => 'Archief', 'url' => home_url('/archief/')],
-        ['label' => 'Contact', 'url' => home_url('/contact/')],
+        ['label' => 'Familiearchief', 'url' => schuit_portal_category_url('publicaties', 5)],
+        ['label' => 'Nieuws', 'url' => schuit_portal_category_url('nieuws', 1)],
+        ['label' => 'Over de stichting', 'url' => schuit_portal_page_url('about', '/?page_id=2')],
+        ['label' => 'Contact', 'url' => 'mailto:info@stichtingschu-y-i-ij-t.nl'],
     ];
 
     echo '<ul class="site-nav__list">';
