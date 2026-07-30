@@ -162,18 +162,6 @@ function schuit_portal_webtrees_config(): array {
     return $config;
 }
 
-function schuit_portal_webtrees_count(mysqli $connection, string $query): ?int {
-    $result = $connection->query($query);
-    if (!$result instanceof mysqli_result) {
-        return null;
-    }
-
-    $row = $result->fetch_row();
-    $result->free();
-
-    return isset($row[0]) ? (int) $row[0] : null;
-}
-
 function schuit_portal_webtrees_metrics(): array {
     $cached = get_transient('schuit_portal_webtrees_metrics');
     if (is_array($cached)) {
@@ -187,34 +175,29 @@ function schuit_portal_webtrees_metrics(): array {
         'trees' => null,
     ];
 
-    if (!class_exists('mysqli')) {
+    $metrics_path = getenv('WEBTREES_METRICS_PATH') ?: '/var/www/shared/webtrees/data/metrics.json';
+    if (!is_readable($metrics_path)) {
+        set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
         return $metrics;
     }
 
-    $config = schuit_portal_webtrees_config();
-    if ($config['host'] === '' || $config['user'] === '' || $config['name'] === '') {
+    $json = file_get_contents($metrics_path);
+    if ($json === false) {
+        set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
         return $metrics;
     }
 
-    $prefix = preg_replace('/[^A-Za-z0-9_]/', '', $config['prefix']);
-    if (!is_string($prefix) || $prefix === '') {
-        $prefix = 'wt_';
-    }
-
-    mysqli_report(MYSQLI_REPORT_OFF);
-    $connection = @new mysqli($config['host'], $config['user'], $config['password'], $config['name'], (int) $config['port']);
-    if ($connection->connect_errno !== 0) {
+    $data = json_decode($json, true);
+    if (!is_array($data)) {
+        set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
         return $metrics;
     }
 
-    $connection->set_charset('utf8mb4');
+    $metrics['individuals'] = isset($data['individuals']) ? (int) $data['individuals'] : null;
+    $metrics['families'] = isset($data['families']) ? (int) $data['families'] : null;
+    $metrics['places'] = isset($data['places']) ? (int) $data['places'] : null;
+    $metrics['trees'] = isset($data['trees']) ? (int) $data['trees'] : null;
 
-    $metrics['individuals'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(*) FROM `{$prefix}individuals`");
-    $metrics['families'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(*) FROM `{$prefix}families`");
-    $metrics['places'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(DISTINCT p_place) FROM `{$prefix}places`");
-    $metrics['trees'] = schuit_portal_webtrees_count($connection, "SELECT COUNT(DISTINCT i_file) FROM `{$prefix}individuals`");
-
-    $connection->close();
     set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
 
     return $metrics;

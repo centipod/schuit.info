@@ -57,12 +57,12 @@ get_header();
       <span>Families</span>
     </div>
     <div class="archive-metric">
-      <span class="archive-metric__icon">L</span>
+      <span class="archive-metric__icon">P</span>
       <strong><?php echo esc_html(schuit_portal_metric_value($metrics['places'])); ?></strong>
       <span>Plaatsen</span>
     </div>
     <div class="archive-metric">
-      <span class="archive-metric__icon">T</span>
+      <span class="archive-metric__icon">S</span>
       <strong><?php echo esc_html(schuit_portal_metric_value($metrics['trees'])); ?></strong>
       <span>Stamboom</span>
     </div>
