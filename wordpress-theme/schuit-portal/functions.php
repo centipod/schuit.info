@@ -17,7 +17,10 @@ add_action('after_setup_theme', 'schuit_portal_setup');
 
 function schuit_portal_assets(): void {
     $stylesheet = get_stylesheet_directory() . '/style.css';
+    $navigation = get_stylesheet_directory() . '/navigation.js';
+
     wp_enqueue_style('schuit-portal-style', get_stylesheet_uri(), [], (string) filemtime($stylesheet));
+    wp_enqueue_script('schuit-portal-navigation', get_stylesheet_directory_uri() . '/navigation.js', [], (string) filemtime($navigation), true);
 }
 add_action('wp_enqueue_scripts', 'schuit_portal_assets');
 

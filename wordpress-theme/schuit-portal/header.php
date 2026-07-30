@@ -18,7 +18,13 @@ declare(strict_types=1);
         <span class="site-brand__subtitle">Familiearchief</span>
       </span>
     </a>
-    <nav class="site-nav site-header__nav" aria-label="Hoofdmenu">
+    <button class="site-menu-toggle" type="button" aria-controls="site-navigation" aria-expanded="false">
+      <span class="site-menu-toggle__bar"></span>
+      <span class="site-menu-toggle__bar"></span>
+      <span class="site-menu-toggle__bar"></span>
+      <span class="screen-reader-text">Menu</span>
+    </button>
+    <nav id="site-navigation" class="site-nav site-header__nav" aria-label="Hoofdmenu">
       <?php
       wp_nav_menu([
           'theme_location' => 'primary',
