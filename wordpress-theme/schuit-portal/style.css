@@ -1391,7 +1391,7 @@ a:hover {
 
 .archive-hero {
   display: grid;
-  grid-template-columns: minmax(22rem, 0.82fr) minmax(19.2rem, 0.94fr);
+  grid-template-columns: minmax(22rem, 0.82fr) minmax(15.36rem, 0.75fr);
   min-height: clamp(27rem, 48vw, 35rem);
   border-bottom: 1px solid rgba(16, 38, 74, 0.13);
   background:
@@ -1480,7 +1480,7 @@ a:hover {
 .archive-hero__image {
   position: relative;
   min-width: 0;
-  margin-left: -6.4rem;
+  margin-left: -5.12rem;
 }
 
 .archive-hero__image::before {
