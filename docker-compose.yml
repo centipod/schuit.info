@@ -48,8 +48,8 @@ services:
       WEBTREES_DB_PASSWORD: ${WEBTREES_DB_PASSWORD:-webtrees-pass}
       WEBTREES_TABLE_PREFIX: wt_
       WORDPRESS_CONFIG_EXTRA: |
-        define('WP_HOME', 'http://localhost:${LOCAL_PORT:-8081}');
-        define('WP_SITEURL', 'http://localhost:${LOCAL_PORT:-8081}');
+        define('WP_HOME', 'http://localhost:${LOCAL_PORT:-3003}');
+        define('WP_SITEURL', 'http://localhost:${LOCAL_PORT:-3003}');
         define('DISABLE_WP_CRON', true);
         define('FORCE_SSL_ADMIN', false);
     volumes:
