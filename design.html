@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script>
+      const scope = {"channelId":"27a676a1ddb7580"};
+      var t="undefined"!=typeof globalThis?globalThis:"undefined"!=typeof window?window:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};function r(t){return t&&t.__esModule&&Object.prototype.hasOwnProperty.call(t,"default")?t.default:t}var e={},n={};!function(t){t.__esModule=!0,t.default=["log","debug","info","warn","error","table","clear","time","timeEnd","count","assert","command","result"]}(n);var a,o={},i={};(a=i).__esModule=!0,a.default=function(){var t=function(){return(65536*(1+Math.random())|0).toString(16).substring(1)};return t()+t()+"-"+t()+"-"+t()+"-"+t()+"-"+t()+"-"+Date.now()};var u={},s={__esModule:!0};s.update=s.state=void 0,s.update=function(t){s.state=t};var f={},c={};!function(r){var e=t&&t.__assign||function(){return e=Object.assign||function(t){for(var r,e=1,n=arguments.length;e<n;e++)for(var a in r=arguments[e])Object.prototype.hasOwnProperty.call(r,a)&&(t[a]=r[a]);return t},e.apply(this,arguments)};r.__esModule=!0,r.initialState=void 0,r.initialState={timings:{},count:{}};var n=function(){return"undefined"!=typeof performance&&performance.now?performance.now():Date.now()};r.default=function(t,a){var o,i,u;switch(void 0===t&&(t=r.initialState),a.type){case"COUNT":var s=t.count[a.name]||0;return e(e({},t),{count:e(e({},t.count),(o={},o[a.name]=s+1,o))});case"TIME_START":return e(e({},t),{timings:e(e({},t.timings),(i={},i[a.name]={start:n()},i))});case"TIME_END":var f=t.timings[a.name],c=n(),l=c-f.start;return e(e({},t),{timings:e(e({},t.timings),(u={},u[a.name]=e(e({},f),{end:c,time:l}),u))});default:return t}}}(c),function(r){var e=t&&t.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};r.__esModule=!0;var n=e(c),a=s;r.default=function(t){a.update(n.default(a.state,t))}}(f);var l={__esModule:!0};l.timeEnd=l.timeStart=l.count=void 0,l.count=function(t){return{type:"COUNT",name:t}},l.timeStart=function(t){return{type:"TIME_START",name:t}},l.timeEnd=function(t){return{type:"TIME_END",name:t}};var d=t&&t.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};u.__esModule=!0,u.stop=u.start=void 0;var p=s,h=d(f),m=l;u.start=function(t){h.default(m.timeStart(t))},u.stop=function(t){var r=null===p.state||void 0===p.state?void 0:p.state.timings[t];return r&&!r.end?(h.default(m.timeEnd(t)),{method:"log",data:[t+": "+p.state.timings[t].time+"ms"]}):{method:"warn",data:["Timer '"+t+"' does not exist"]}};var y={},v=t&&t.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};y.__esModule=!0,y.increment=void 0;var _=s,b=v(f),g=l;y.increment=function(t){return b.default(g.count(t)),{method:"log",data:[t+": "+_.state.count[t]]}};var M={},T=t&&t.__spreadArrays||function(){for(var t=0,r=0,e=arguments.length;r<e;r++)t+=arguments[r].length;var n=Array(t),a=0;for(r=0;r<e;r++)for(var o=arguments[r],i=0,u=o.length;i<u;i++,a++)n[a]=o[i];return n};M.__esModule=!0,M.test=void 0,M.test=function(t){for(var r=[],e=1;e<arguments.length;e++)r[e-1]=arguments[e];return!t&&(0===r.length&&r.push("console.assert"),{method:"error",data:T(["Assertion failed:"],r)})},function(r){var e=t&&t.__assign||function(){return e=Object.assign||function(t){for(var r,e=1,n=arguments.length;e<n;e++)for(var a in r=arguments[e])Object.prototype.hasOwnProperty.call(r,a)&&(t[a]=r[a]);return t},e.apply(this,arguments)},n=t&&t.__createBinding||(Object.create?function(t,r,e,n){void 0===n&&(n=e),Object.defineProperty(t,n,{enumerable:!0,get:function(){return r[e]}})}:function(t,r,e,n){void 0===n&&(n=e),t[n]=r[e]}),a=t&&t.__setModuleDefault||(Object.create?function(t,r){Object.defineProperty(t,"default",{enumerable:!0,value:r})}:function(t,r){t.default=r}),o=t&&t.__importStar||function(t){if(t&&t.__esModule)return t;var r={};if(null!=t)for(var e in t)"default"!==e&&Object.prototype.hasOwnProperty.call(t,e)&&n(r,t,e);return a(r,t),r},s=t&&t.__spreadArrays||function(){for(var t=0,r=0,e=arguments.length;r<e;r++)t+=arguments[r].length;var n=Array(t),a=0;for(r=0;r<e;r++)for(var o=arguments[r],i=0,u=o.length;i<u;i++,a++)n[a]=o[i];return n},f=t&&t.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};r.__esModule=!0;var c=f(i),l=o(u),d=o(y),p=o(M);r.default=function(t,r,n){var a=n||c.default();switch(t){case"clear":return{method:t,id:a};case"count":return!!(o="string"==typeof r[0]?r[0]:"default")&&e(e({},d.increment(o)),{id:a});case"time":case"timeEnd":var o;return!!(o="string"==typeof r[0]?r[0]:"default")&&("time"===t?(l.start(o),!1):e(e({},l.stop(o)),{id:a}));case"assert":if(0!==r.length){var i=p.test.apply(p,s([r[0]],r.slice(1)));if(i)return e(e({},i),{id:a})}return!1;case"error":return{method:t,id:a,data:r.map((function(t){try{return t.stack||t}catch(r){return t}}))};default:return{method:t,id:a,data:r}}}}(o);var S={},O={};!function(t){var r;t.__esModule=!0,function(t){t[t.infinity=0]="infinity",t[t.minusInfinity=1]="minusInfinity",t[t.minusZero=2]="minusZero"}(r||(r={})),t.default={type:"Arithmetic",lookup:Number,shouldTransform:function(t,r){return"number"===t&&(r===1/0||r===-1/0||function(t){return 1/t==-1/0}(r))},toSerializable:function(t){return t===1/0?r.infinity:t===-1/0?r.minusInfinity:r.minusZero},fromSerializable:function(t){return t===r.infinity?1/0:t===r.minusInfinity?-1/0:t===r.minusZero?-0:t}}}(O);var w={};!function(t){t.__esModule=!0,t.default={type:"Function",lookup:Function,shouldTransform:function(t,r){return"function"==typeof r},toSerializable:function(t){var r="";try{r=t.toString().substring(r.indexOf("{")+1,r.lastIndexOf("}"))}catch(t){}return{name:t.name,body:r,proto:Object.getPrototypeOf(t).constructor.name}},fromSerializable:function(t){try{var r=function(){};return"string"==typeof t.name&&Object.defineProperty(r,"name",{value:t.name,writable:!1}),"string"==typeof t.body&&Object.defineProperty(r,"body",{value:t.body,writable:!1}),"string"==typeof t.proto&&(r.constructor={name:t.proto}),r}catch(r){return t}}}}(w);var A={};!function(t){var r;function e(t){for(var r={},e=0,n=t.attributes;e<n.length;e++){var a=n[e];r[a.name]=a.value}return r}t.__esModule=!0,t.default={type:"HTMLElement",shouldTransform:function(t,r){return r&&r.children&&"string"==typeof r.innerHTML&&"string"==typeof r.tagName},toSerializable:function(t){return{tagName:t.tagName.toLowerCase(),attributes:e(t),innerHTML:t.innerHTML}},fromSerializable:function(t){try{var e=(r||(r=document.implementation.createHTMLDocument("sandbox"))).createElement(t.tagName);e.innerHTML=t.innerHTML;for(var n=0,a=Object.keys(t.attributes);n<a.length;n++){var o=a[n];try{e.setAttribute(o,t.attributes[o])}catch(t){}}return e}catch(r){return t}}}}(A);var j={};!function(r){var e=t&&t.__assign||function(){return e=Object.assign||function(t){for(var r,e=1,n=arguments.length;e<n;e++)for(var a in r=arguments[e])Object.prototype.hasOwnProperty.call(r,a)&&(t[a]=r[a]);return t},e.apply(this,arguments)};r.__esModule=!0,r.default={type:"Map",shouldTransform:function(t,r){return r&&r.constructor&&"Map"===r.constructor.name},toSerializable:function(t){var r={};return t.forEach((function(t,e){var n="object"==typeof e?JSON.stringify(e):e;r[n]=t})),{name:"Map",body:r,proto:Object.getPrototypeOf(t).constructor.name}},fromSerializable:function(t){var r=t.body,n=e({},r);return"string"==typeof t.proto&&(n.constructor={name:t.proto}),n}}}(j);var z={};!function(t){t.__esModule=!0;var r="@t",e=/^#*@(t|r)$/,n=(0,eval)("this"),a="function"==typeof ArrayBuffer,o="function"==typeof Map,i="function"==typeof Set,u=["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"],s=Array.prototype.slice,f={serialize:function(t){return JSON.stringify(t)},deserialize:function(t){return JSON.parse(t)}},c=function(){function t(t,r){this.references=t,this.transforms=r,this.transformsMap=this._makeTransformsMap(),this.circularCandidates=[],this.circularCandidatesDescrs=[],this.circularRefCount=0}return t._createRefMark=function(t){var r=Object.create(null);return r["@r"]=t,r},t.prototype._createCircularCandidate=function(t,r,e){this.circularCandidates.push(t),this.circularCandidatesDescrs.push({parent:r,key:e,refIdx:-1})},t.prototype._applyTransform=function(t,e,n,a){var o=Object.create(null),i=a.toSerializable(t);return"object"==typeof i&&this._createCircularCandidate(t,e,n),o[r]=a.type,o.data=this._handleValue((function(){return i}),e,n),o},t.prototype._handleArray=function(t){for(var r=[],e=function(e){r[e]=n._handleValue((function(){return t[e]}),r,e)},n=this,a=0;a<t.length;a++)e(a);return r},t.prototype._handlePlainObject=function(t){var r,n,a=Object.create(null),o=function(r){if(Reflect.has(t,r)){var n=e.test(r)?"#"+r:r;a[n]=i._handleValue((function(){return t[r]}),a,n)}},i=this;for(var u in t)o(u);var s=null===(n=null===(r=null==t?void 0:t.__proto__)||void 0===r?void 0:r.constructor)||void 0===n?void 0:n.name;return s&&"Object"!==s&&(a.constructor={name:s}),a},t.prototype._handleObject=function(t,r,e){return this._createCircularCandidate(t,r,e),Array.isArray(t)?this._handleArray(t):this._handlePlainObject(t)},t.prototype._ensureCircularReference=function(r){var e=this.circularCandidates.indexOf(r);if(e>-1){var n=this.circularCandidatesDescrs[e];return-1===n.refIdx&&(n.refIdx=n.parent?++this.circularRefCount:0),t._createRefMark(n.refIdx)}return null},t.prototype._handleValue=function(t,r,e){try{var n=t(),a=typeof n,o="object"===a&&null!==n;if(o){var i=this._ensureCircularReference(n);if(i)return i}var u=this._findTransform(a,n);return u?this._applyTransform(n,r,e,u):o?this._handleObject(n,r,e):n}catch(t){try{return this._handleValue((function(){return t instanceof Error?t:new Error(t)}),r,e)}catch(t){return null}}},t.prototype._makeTransformsMap=function(){if(o){var t=new Map;return this.transforms.forEach((function(r){r.lookup&&t.set(r.lookup,r)})),t}},t.prototype._findTransform=function(t,r){if(o&&r&&r.constructor&&(null==(a=this.transformsMap.get(r.constructor))?void 0:a.shouldTransform(t,r)))return a;for(var e=0,n=this.transforms;e<n.length;e++){var a;if((a=n[e]).shouldTransform(t,r))return a}},t.prototype.transform=function(){for(var r=this,e=[this._handleValue((function(){return r.references}),null,null)],n=0,a=this.circularCandidatesDescrs;n<a.length;n++){var o=a[n];o.refIdx>0&&(e[o.refIdx]=o.parent[o.key],o.parent[o.key]=t._createRefMark(o.refIdx))}return e},t}(),l=function(){function t(t,r){this.activeTransformsStack=[],this.visitedRefs=Object.create(null),this.references=t,this.transformMap=r}return t.prototype._handlePlainObject=function(t){var r=Object.create(null);for(var n in"constructor"in t&&(t.constructor&&"string"==typeof t.constructor.name||(t.constructor={name:"Object"})),t)t.hasOwnProperty(n)&&(this._handleValue(t[n],t,n),e.test(n)&&(r[n.substring(1)]=t[n],delete t[n]));for(var a in r)t[a]=r[a]},t.prototype._handleTransformedObject=function(t,e,n){var a=t[r],o=this.transformMap[a];if(!o)throw new Error("Can't find transform for \""+a+'" type.');this.activeTransformsStack.push(t),this._handleValue(t.data,t,"data"),this.activeTransformsStack.pop(),e[n]=o.fromSerializable(t.data)},t.prototype._handleCircularSelfRefDuringTransform=function(t,r,e){var n=this.references;Object.defineProperty(r,e,{val:void 0,configurable:!0,enumerable:!0,get:function(){return void 0===this.val&&(this.val=n[t]),this.val},set:function(t){this.val=t}})},t.prototype._handleCircularRef=function(t,r,e){this.activeTransformsStack.includes(this.references[t])?this._handleCircularSelfRefDuringTransform(t,r,e):(this.visitedRefs[t]||(this.visitedRefs[t]=!0,this._handleValue(this.references[t],this.references,t)),r[e]=this.references[t])},t.prototype._handleValue=function(t,e,n){if("object"==typeof t&&null!==t){var a=t["@r"];if(void 0!==a)this._handleCircularRef(a,e,n);else if(t[r])this._handleTransformedObject(t,e,n);else if(Array.isArray(t))for(var o=0;o<t.length;o++)this._handleValue(t[o],t,o);else this._handlePlainObject(t)}},t.prototype.transform=function(){return this.visitedRefs[0]=!0,this._handleValue(this.references[0],this.references,0),this.references[0]},t}(),d=[{type:"[[NaN]]",shouldTransform:function(t,r){return"number"===t&&isNaN(r)},toSerializable:function(){return""},fromSerializable:function(){return NaN}},{type:"[[undefined]]",shouldTransform:function(t){return"undefined"===t},toSerializable:function(){return""},fromSerializable:function(){}},{type:"[[Date]]",lookup:Date,shouldTransform:function(t,r){return r instanceof Date},toSerializable:function(t){return t.getTime()},fromSerializable:function(t){var r=new Date;return r.setTime(t),r}},{type:"[[RegExp]]",lookup:RegExp,shouldTransform:function(t,r){return r instanceof RegExp},toSerializable:function(t){var r={src:t.source,flags:""};return t.globalThis&&(r.flags+="g"),t.ignoreCase&&(r.flags+="i"),t.multiline&&(r.flags+="m"),r},fromSerializable:function(t){return new RegExp(t.src,t.flags)}},{type:"[[Error]]",lookup:Error,shouldTransform:function(t,r){return r instanceof Error},toSerializable:function(t){var r,e;return t.stack||null===(e=(r=Error).captureStackTrace)||void 0===e||e.call(r,t),{name:t.name,message:t.message,stack:t.stack}},fromSerializable:function(t){var r=new(n[t.name]||Error)(t.message);return r.stack=t.stack,r}},{type:"[[ArrayBuffer]]",lookup:a&&ArrayBuffer,shouldTransform:function(t,r){return a&&r instanceof ArrayBuffer},toSerializable:function(t){var r=new Int8Array(t);return s.call(r)},fromSerializable:function(t){if(a){var r=new ArrayBuffer(t.length);return new Int8Array(r).set(t),r}return t}},{type:"[[TypedArray]]",shouldTransform:function(t,r){if(a)return ArrayBuffer.isView(r)&&!(r instanceof DataView);for(var e=0,o=u;e<o.length;e++){var i=o[e];if("function"==typeof n[i]&&r instanceof n[i])return!0}return!1},toSerializable:function(t){return{ctorName:t.constructor.name,arr:s.call(t)}},fromSerializable:function(t){return"function"==typeof n[t.ctorName]?new n[t.ctorName](t.arr):t.arr}},{type:"[[Map]]",lookup:o&&Map,shouldTransform:function(t,r){return o&&r instanceof Map},toSerializable:function(t){var r=[];return t.forEach((function(t,e){r.push(e),r.push(t)})),r},fromSerializable:function(t){if(o){for(var r=new Map,e=0;e<t.length;e+=2)r.set(t[e],t[e+1]);return r}for(var n=[],a=0;a<t.length;a+=2)n.push([t[e],t[e+1]]);return n}},{type:"[[Set]]",lookup:i&&Set,shouldTransform:function(t,r){return i&&r instanceof Set},toSerializable:function(t){var r=[];return t.forEach((function(t){r.push(t)})),r},fromSerializable:function(t){if(i){for(var r=new Set,e=0;e<t.length;e++)r.add(t[e]);return r}return t}}],p=function(){function t(t){this.transforms=[],this.transformsMap=Object.create(null),this.serializer=t||f,this.addTransforms(d)}return t.prototype.addTransforms=function(t){for(var r=0,e=t=Array.isArray(t)?t:[t];r<e.length;r++){var n=e[r];if(this.transformsMap[n.type])throw new Error('Transform with type "'+n.type+'" was already added.');this.transforms.push(n),this.transformsMap[n.type]=n}return this},t.prototype.removeTransforms=function(t){for(var r=0,e=t=Array.isArray(t)?t:[t];r<e.length;r++){var n=e[r],a=this.transforms.indexOf(n);a>-1&&this.transforms.splice(a,1),delete this.transformsMap[n.type]}return this},t.prototype.encode=function(t){var r=new c(t,this.transforms).transform();return this.serializer.serialize(r)},t.prototype.decode=function(t){var r=this.serializer.deserialize(t);return new l(r,this.transformsMap).transform()},t}();t.default=p}(z);var E=t&&t.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};S.__esModule=!0,S.Decode=P=S.Encode=void 0;var k=E(O),C=E(w),D=E(A),I=E(j),N=E(z),R=[D.default,C.default,k.default,I.default],x=new N.default;x.addTransforms(R);var P=S.Encode=function(t){return JSON.parse(x.encode(t))};S.Decode=function(t){return x.decode(JSON.stringify(t))},function(r){var e=t&&t.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};r.__esModule=!0;var a=e(n),i=e(o),u=S;r.default=function(t,r,e){void 0===e&&(e=!0);for(var n=t,o={pointers:{},src:{npm:"https://npmjs.com/package/console-feed",github:"https://github.com/samdenty99/console-feed"}},s=function(t){var a=n[t];n[t]=function(){a.apply(this,arguments);var n=[].slice.call(arguments);setTimeout((function(){var a=i.default(t,n);if(a){var o=a;e&&(o=u.Encode(a)),r(o,a)}}))},o.pointers[t]=a},f=0,c=a.default;f<c.length;f++)s(c[f]);return n.feed=o,n}}(e),r(e)(window.console,(function(t){var r=P(t);parent.postMessage({type:"console",codesandbox:!0,log:Array.isArray(r)?r[0]:r,channelId:scope.channelId},"*")}));
+
+    </script>
+
+<script>
+  window.addEventListener("message", (message) => {
+    if(message.data.type === "refresh") {
+      window.location.reload();
+    }
+  })
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics — Stichting Schu-y-i-ij-t</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&amp;family=Roboto:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #f7f4ef;
+    --surface:    #ffffff;
+    --ink:        #26211d;
+    --ink-muted:  #6f665d;
+    --border:     #e7e0d4;
+    --accent:     #2f5d4f;
+    --accent-h:   #244a3e;
+    --bronze:     #9c6b3e;
+    --blue:       #3d6b8d;
+    --rose:       #b06a7a;
+    --shadow:     0 1px 3px rgba(0,0,0,0.04);
+    --shadow-h:   0 4px 16px rgba(0,0,0,0.09);
+    --radius:     10px;
+    --font-body:  'Open Sans', sans-serif;
+    --font-head:  'Roboto', sans-serif;
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 9px;
+    text-decoration: none; flex-shrink: 0;
+  }
+  .nav-brand-text {
+    font-family: var(--font-head); font-weight: 700; font-size: 0.95rem;
+    color: var(--ink); letter-spacing: -0.01em; white-space: nowrap;
+  }
+  .nav-search {
+    flex: 1; max-width: 340px; position: relative;
+  }
+  .nav-search input {
+    width: 100%; padding: 7px 12px 7px 36px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); color: var(--ink);
+    font-family: var(--font-body); font-size: 0.85rem;
+    outline: none; transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .nav-search input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47,93,79,0.10);
+  }
+  .nav-search input::placeholder { color: var(--ink-muted); }
+  .nav-search-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; color: var(--ink-muted);
+  }
+  .nav-links {
+    display: flex; align-items: center; gap: 2px; margin-left: auto;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 5px;
+    font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+    color: var(--ink-muted); text-decoration: none;
+    padding: 5px 9px; border-radius: 6px;
+    transition: color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--accent); background: rgba(47,93,79,0.06); }
+  .nav-link svg { flex-shrink: 0; }
+  .nav-sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
+  .nav-btn {
+    font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+    padding: 5px 13px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--ink-muted); cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(47,93,79,0.04); }
+  .nav-btn-primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .nav-btn-primary:hover { background: var(--accent-h); border-color: var(--accent-h); color: #fff; }
+
+  /* ── PAGE LAYOUT ── */
+  .page-wrap {
+    max-width: 1200px; margin: 0 auto; padding: 32px 32px 56px;
+  }
+
+  /* ── BREADCRUMB & HEADER ── */
+  .breadcrumb {
+    font-family: var(--font-body); font-size: 0.78rem;
+    color: var(--ink-muted); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .breadcrumb a { color: var(--accent); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb-sep { color: var(--border); font-size: 0.9rem; }
+  .page-title {
+    font-family: var(--font-head); font-weight: 900; font-size: 2.6rem;
+    color: var(--ink); letter-spacing: -0.03em; line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .page-subtitle {
+    font-family: var(--font-body); font-size: 0.875rem; color: var(--ink-muted);
+    display: flex; align-items: center; gap: 7px; margin-bottom: 32px;
+  }
+
+  /* ── CONTENT GRID ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 296px;
+    gap: 24px;
+    align-items: start;
+  }
+  .main-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .side-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: var(--shadow-h); }
+  .card-body { padding: 24px 26px; }
+  .card-header {
+    padding: 16px 26px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title {
+    font-family: var(--font-head); font-weight: 700; font-size: 1.0rem;
+    color: var(--ink); letter-spacing: -0.01em;
+  }
+
+  /* ── HERO STATS GRID ── */
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 14px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px 18px 18px;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .stat-card:hover { box-shadow: var(--shadow-h); transform: translateY(-2px); }
+  .stat-icon { color: var(--accent); display: flex; }
+  .stat-number {
+    font-family: var(--font-head); font-weight: 900; font-size: 2.1rem;
+    color: var(--ink); letter-spacing: -0.03em; line-height: 1;
+  }
+  .stat-label {
+    font-family: var(--font-body); font-size: 0.78rem; font-weight: 600;
+    color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* ── GENDER DISTRIBUTION ── */
+  .gender-bar-wrap {
+    margin: 6px 0 16px;
+    height: 12px; border-radius: 6px; overflow: hidden;
+    display: flex; background: var(--bg);
+  }
+  .gender-seg { height: 100%; transition: width 0.5s ease; }
+  .gender-seg-m { background: var(--blue); }
+  .gender-seg-f { background: var(--rose); }
+  .gender-seg-u { background: var(--border); }
+  .gender-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .gender-row {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-body); font-size: 0.86rem;
+  }
+  .gender-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .gender-name { color: var(--ink); font-weight: 500; flex: 1; }
+  .gender-count { color: var(--ink); font-weight: 600; font-family: var(--font-head); }
+  .gender-pct { color: var(--ink-muted); font-size: 0.8rem; min-width: 42px; text-align: right; }
+
+  /* ── ARCHIVE CONTENTS ── */
+  .archive-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  }
+  .archive-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .archive-grid .archive-item:nth-last-child(-n+2) { border-bottom: none; }
+  .archive-item-label {
+    font-family: var(--font-body); font-size: 0.85rem; color: var(--ink-muted);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .archive-item-val {
+    font-family: var(--font-head); font-weight: 700; font-size: 0.95rem;
+    color: var(--ink);
+  }
+  .archive-item-val.muted { color: var(--ink-muted); }
+  .archive-col-inner { padding: 0 12px 0 0; }
+  .archive-col-inner:last-child { padding: 0 0 0 20px; border-left: 1px solid var(--border); }
+
+  /* ── NOTABLE RECORDS ── */
+  .notable-list { display: flex; flex-direction: column; }
+  .notable-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 0; border-bottom: 1px solid var(--border);
+  }
+  .notable-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .notable-icon {
+    flex-shrink: 0; margin-top: 2px; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .notable-content { flex: 1; min-width: 0; }
+  .notable-label {
+    font-family: var(--font-body); font-size: 0.75rem; font-weight: 600;
+    color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 2px;
+  }
+  .notable-value {
+    font-family: var(--font-body); font-size: 0.88rem; color: var(--ink);
+  }
+  .notable-value a {
+    color: var(--accent); text-decoration: none; font-weight: 600;
+  }
+  .notable-value a:hover { text-decoration: underline; }
+  .notable-private {
+    color: var(--ink-muted); font-style: italic; font-size: 0.85rem;
+  }
+  .notable-date { color: var(--ink-muted); font-size: 0.82rem; }
+
+  /* ── AVG AGE ── */
+  .avg-age-display {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px;
+  }
+  .avg-age-number {
+    font-family: var(--font-head); font-weight: 900; font-size: 3.8rem;
+    color: var(--ink); letter-spacing: -0.04em; line-height: 1;
+  }
+  .avg-age-unit {
+    font-family: var(--font-head); font-weight: 400; font-size: 1.2rem;
+    color: var(--ink-muted);
+  }
+  .avg-age-label {
+    font-family: var(--font-body); font-size: 0.82rem; color: var(--ink-muted);
+    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+    margin-left: 2px; align-self: flex-end; padding-bottom: 6px;
+  }
+  .avg-gender-rows { display: flex; flex-direction: column; gap: 10px; }
+  .avg-gender-row { display: flex; align-items: center; gap: 10px; }
+  .avg-gender-label {
+    font-family: var(--font-body); font-size: 0.84rem; color: var(--ink-muted);
+    display: flex; align-items: center; gap: 7px; width: 80px;
+  }
+  .avg-mini-bar-wrap {
+    flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;
+  }
+  .avg-mini-bar { height: 100%; border-radius: 3px; }
+  .avg-gender-val {
+    font-family: var(--font-head); font-weight: 700; font-size: 0.9rem;
+    color: var(--ink); min-width: 26px; text-align: right;
+  }
+
+  /* ── SIDEBAR ── */
+  .side-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .side-card-header {
+    padding: 13px 18px 11px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .side-card-title {
+    font-family: var(--font-head); font-weight: 600; font-size: 0.85rem;
+    color: var(--ink); letter-spacing: -0.01em;
+  }
+  .side-card-body { padding: 10px 0; }
+  .side-link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 18px; font-family: var(--font-body); font-size: 0.855rem;
+    color: var(--accent); text-decoration: none; font-weight: 500;
+    transition: background 0.14s, color 0.14s;
+  }
+  .side-link:hover { background: rgba(47,93,79,0.06); color: var(--accent-h); }
+  .side-link svg { flex-shrink: 0; color: var(--ink-muted); }
+  .side-empty {
+    padding: 20px 18px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    text-align: center;
+  }
+  .side-empty-img {
+    width: 100%; max-width: 200px; height: 90px;
+    border: 1.5px dashed var(--border); border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+  .side-empty-text {
+    font-family: var(--font-body); font-size: 0.8rem; color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  .online-status {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 18px;
+    font-family: var(--font-body); font-size: 0.8rem; color: var(--ink-muted);
+  }
+  .online-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); flex-shrink: 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 22px 32px;
+    text-align: center;
+    font-family: var(--font-body); font-size: 0.78rem; color: var(--ink-muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── ACCENT TINT CHIP ── */
+  .accent-chip {
+    display: inline-block; width: 5px; height: 22px; border-radius: 3px;
+    background: var(--accent); margin-right: 10px; flex-shrink: 0;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .hero-stats { grid-template-columns: repeat(2,1fr); }
+    .nav-links .nav-link span { display: none; }
+    .page-title { font-size: 2rem; }
+  }
+  @media (max-width: 640px) {
+    .nav { padding: 0 16px; gap: 10px; }
+    .page-wrap { padding: 20px 16px 40px; }
+    .hero-stats { grid-template-columns: repeat(2,1fr); gap: 10px; }
+    .stat-number { font-size: 1.6rem; }
+    .archive-grid { grid-template-columns: 1fr; }
+    .archive-col-inner:last-child { padding: 0; border-left: none; }
+    .nav-search { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ NAV ═══════════════════════════ -->
+<nav class="nav">
+  <!-- Brand -->
+  <a href="#" class="nav-brand">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#2f5d4f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="11" y1="2" x2="11" y2="20"></line>
+      <line x1="11" y1="7" x2="4" y2="12"></line>
+      <line x1="11" y1="7" x2="18" y2="12"></line>
+      <line x1="4" y1="12" x2="1.5" y2="16"></line>
+      <line x1="4" y1="12" x2="6.5" y2="16"></line>
+      <line x1="18" y1="12" x2="15.5" y2="16"></line>
+      <line x1="18" y1="12" x2="20.5" y2="16"></line>
+    </svg>
+    <span class="nav-brand-text">Stichting Schu-y-i-ij-t</span>
+  </a>
+
+  <!-- Search -->
+  <div class="nav-search">
+    <span class="nav-search-icon">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="8.5" cy="8.5" r="5.5"></circle><line x1="13" y1="13" x2="18" y2="18"></line>
+      </svg>
+    </span>
+    <input type="search" placeholder="Search the family tree…" aria-label="Search the family tree">
+  </div>
+
+  <!-- Nav links -->
+  <div class="nav-links">
+    <a href="#" class="nav-link">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="10" y1="2" x2="10" y2="18"></line><line x1="10" y1="7" x2="4.5" y2="11"></line><line x1="10" y1="7" x2="15.5" y2="11"></line>
+      </svg>
+      <span>Family tree</span>
+    </a>
+    <a href="#" class="nav-link">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="6" height="6" rx="1.5"></rect><rect x="12" y="2" width="6" height="6" rx="1.5"></rect><rect x="7" y="12" width="6" height="6" rx="1.5"></rect>
+        <line x1="5" y1="8" x2="5" y2="10"></line><line x1="15" y1="8" x2="15" y2="10"></line>
+        <line x1="5" y1="10" x2="15" y2="10"></line><line x1="10" y1="10" x2="10" y2="12"></line>
+      </svg>
+      <span>Charts</span>
+    </a>
+    <a href="#" class="nav-link">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <line x1="4" y1="6" x2="16" y2="6"></line><line x1="4" y1="10" x2="16" y2="10"></line><line x1="4" y1="14" x2="12" y2="14"></line>
+      </svg>
+      <span>Lists</span>
+    </a>
+    <a href="#" class="nav-link">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="14" height="14" rx="1.5"></rect>
+        <line x1="7" y1="2" x2="7" y2="6"></line><line x1="13" y1="2" x2="13" y2="6"></line>
+        <line x1="3" y1="9" x2="17" y2="9"></line>
+      </svg>
+      <span>Calendar</span>
+    </a>
+    <a href="#" class="nav-link">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 16V8l4-4h8v12H4z"></path><line x1="8" y1="4" x2="8" y2="8"></line><line x1="4" y1="8" x2="8" y2="8"></line>
+        <line x1="7" y1="11" x2="13" y2="11"></line><line x1="7" y1="14" x2="11" y2="14"></line>
+      </svg>
+      <span>Reports</span>
+    </a>
+    <div class="nav-sep"></div>
+    <a href="#" class="nav-btn">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="10" cy="8" r="3"></circle><path d="M4 18c0-3.314 2.686-6 6-6s6 2.686 6 6"></path>
+      </svg>
+      Sign in
+    </a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ PAGE ═══════════════════════════ -->
+<div class="page-wrap">
+
+  <!-- Breadcrumb + Header -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="#">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <span>Statistics</span>
+  </nav>
+  <h1 class="page-title">Statistics</h1>
+  <p class="page-subtitle">
+    <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#6f665d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="14" height="14" rx="1.5"></rect>
+      <line x1="7" y1="2" x2="7" y2="6"></line><line x1="13" y1="2" x2="13" y2="6"></line>
+      <line x1="3" y1="9" x2="17" y2="9"></line>
+    </svg>
+    This family tree was last updated on 6 March 2026.
+  </p>
+
+  <!-- Content grid -->
+  <div class="content-grid">
+
+    <!-- ── MAIN COLUMN ── -->
+    <div class="main-col">
+
+      <!-- A. Hero stats -->
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="7" cy="6" r="2.5"></circle><circle cx="13" cy="6" r="2.5"></circle>
+              <path d="M2 17c0-2.761 2.239-5 5-5"></path><path d="M11 17c0-2.761 2.239-5 5-5"></path>
+              <path d="M6 12c1.052-.633 2.276-1 3.5-1 1.225 0 2.448.367 3.5 1"></path>
+            </svg>
+          </div>
+          <div class="stat-number">98,014</div>
+          <div class="stat-label">Individuals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9.5L10 3l7 6.5V17H3V9.5z"></path><rect x="7.5" y="12" width="5" height="5"></rect>
+            </svg>
+          </div>
+          <div class="stat-number">46,018</div>
+          <div class="stat-label">Families</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="14" height="14" rx="1.5"></rect>
+              <line x1="7" y1="2" x2="7" y2="6"></line><line x1="13" y1="2" x2="13" y2="6"></line>
+              <line x1="3" y1="9" x2="17" y2="9"></line>
+              <line x1="7" y1="13" x2="7" y2="13" stroke-width="2"></line><line x1="10" y1="13" x2="10" y2="13" stroke-width="2"></line>
+            </svg>
+          </div>
+          <div class="stat-number">109,454</div>
+          <div class="stat-label">Events</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h9l2 3-2 3H3z"></path>
+              <line x1="3" y1="9" x2="1" y2="9"></line>
+              <line x1="14" y1="6" x2="17" y2="6"></line><line x1="14" y1="12" x2="17" y2="12"></line>
+            </svg>
+          </div>
+          <div class="stat-number">28,556</div>
+          <div class="stat-label">Surnames</div>
+        </div>
+      </div>
+
+      <!-- B. Gender Distribution -->
+      <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;gap:0;">
+          <span class="accent-chip"></span>
+          <span class="card-title">Gender Distribution</span>
+        </div>
+        <div class="card-body">
+          <div class="gender-bar-wrap" role="img" aria-label="Gender distribution: 50.1% male, 49.5% female, 0.4% unknown">
+            <div class="gender-seg gender-seg-m" style="width:50.1%"></div>
+            <div class="gender-seg gender-seg-f" style="width:49.5%"></div>
+            <div class="gender-seg gender-seg-u" style="width:0.4%"></div>
+          </div>
+          <div class="gender-legend">
+            <div class="gender-row">
+              <span class="gender-dot" style="background:var(--blue)"></span>
+              <span class="gender-name">Male</span>
+              <span class="gender-count">49,145</span>
+              <span class="gender-pct">50.1%</span>
+            </div>
+            <div class="gender-row">
+              <span class="gender-dot" style="background:var(--rose)"></span>
+              <span class="gender-name">Female</span>
+              <span class="gender-count">48,550</span>
+              <span class="gender-pct">49.5%</span>
+            </div>
+            <div class="gender-row">
+              <span class="gender-dot" style="background:var(--border)"></span>
+              <span class="gender-name" style="color:var(--ink-muted)">Unknown</span>
+              <span class="gender-count" style="color:var(--ink-muted)">319</span>
+              <span class="gender-pct" style="color:var(--ink-muted)">0.4%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C. Archive Contents -->
+      <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;gap:0;">
+          <span class="accent-chip"></span>
+          <span class="card-title">Archive Contents</span>
+        </div>
+        <div class="card-body" style="padding-top:16px;padding-bottom:16px;">
+          <div class="archive-grid">
+            <div class="archive-col-inner">
+              <div class="archive-item">
+                <span class="archive-item-label">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#6f665d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 16V8l4-4h8v12H4z"></path><line x1="8" y1="4" x2="8" y2="8"></line><line x1="4" y1="8" x2="8" y2="8"></line>
+                  </svg>
+                  Sources
+                </span>
+                <span class="archive-item-val muted">0</span>
+              </div>
+              <div class="archive-item">
+                <span class="archive-item-label">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#6f665d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="14" height="14" rx="2"></rect>
+                    <circle cx="7.5" cy="7.5" r="1.5"></circle>
+                    <path d="M3 14l4-4 3 3 2-2 5 5"></path>
+                  </svg>
+                  Media objects
+                </span>
+                <span class="archive-item-val muted">0</span>
+              </div>
+            </div>
+            <div class="archive-col-inner">
+              <div class="archive-item">
+                <span class="archive-item-label">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#6f665d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="5" width="16" height="13" rx="1.5"></rect>
+                    <path d="M2 9h16"></path>
+                    <path d="M6 2v6M14 2v6"></path>
+                  </svg>
+                  Repositories
+                </span>
+                <span class="archive-item-val muted">0</span>
+              </div>
+              <div class="archive-item">
+                <span class="archive-item-label">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#6f665d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="10" cy="7" r="3"></circle><path d="M4 18c0-3.314 2.686-6 6-6s6 2.686 6 6"></path>
+                  </svg>
+                  Users
+                </span>
+                <span class="archive-item-val">3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. Notable Records -->
+      <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;gap:0;">
+          <span class="accent-chip"></span>
+          <span class="card-title">Notable Records</span>
+        </div>
+        <div class="card-body">
+          <div class="notable-list">
+            <!-- Earliest birth -->
+            <div class="notable-item">
+              <div class="notable-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#2f5d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="10,2 13,8 19,9 14.5,13.5 15.5,19.5 10,17 4.5,19.5 5.5,13.5 1,9 7,8"></polygon>
+                </svg>
+              </div>
+              <div class="notable-content">
+                <div class="notable-label">Earliest birth</div>
+                <div class="notable-value">
+                  <a href="#">Joannes de Freest</a>
+                  <span class="notable-date"> — Born 12 February 173</span>
+                </div>
+              </div>
+            </div>
+            <!-- Latest birth -->
+            <div class="notable-item">
+              <div class="notable-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#9c6b3e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="10" cy="10" r="7"></circle>
+                  <line x1="10" y1="7" x2="10" y2="13"></line><line x1="7" y1="10" x2="13" y2="10"></line>
+                </svg>
+              </div>
+              <div class="notable-content">
+                <div class="notable-label">Latest birth</div>
+                <div class="notable-value">
+                  <span class="notable-private">
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:4px;">
+                      <rect x="5" y="9" width="10" height="9" rx="1.5"></rect>
+                      <path d="M7 9V6.5a3 3 0 0 1 6 0V9"></path>
+                    </svg>
+                    This information is private
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Earliest death -->
+            <div class="notable-item">
+              <div class="notable-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#6f665d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="10" y1="3" x2="10" y2="17"></line>
+                  <line x1="6" y1="7" x2="14" y2="7"></line>
+                </svg>
+              </div>
+              <div class="notable-content">
+                <div class="notable-label">Earliest death</div>
+                <div class="notable-value">
+                  <a href="#">Johny de Schuyteneer</a>
+                  <span class="notable-date"> — Died about 25 January 1024</span>
+                </div>
+              </div>
+            </div>
+            <!-- Latest death -->
+            <div class="notable-item">
+              <div class="notable-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#9c6b3e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="9" width="10" height="9" rx="1.5"></rect>
+                  <path d="M7 9V6.5a3 3 0 0 1 6 0V9"></path>
+                </svg>
+              </div>
+              <div class="notable-content">
+                <div class="notable-label">Latest death</div>
+                <div class="notable-value">
+                  <span class="notable-private">
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:4px;">
+                      <rect x="5" y="9" width="10" height="9" rx="1.5"></rect>
+                      <path d="M7 9V6.5a3 3 0 0 1 6 0V9"></path>
+                    </svg>
+                    This information is private
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Longest-lived -->
+            <div class="notable-item">
+              <div class="notable-icon">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#2f5d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 2h6l-1 6h-4L7 2z"></path>
+                  <path d="M8 8l-3 5h10l-3-5"></path>
+                  <path d="M7 13l1 5h4l1-5"></path>
+                </svg>
+              </div>
+              <div class="notable-content">
+                <div class="notable-label">Longest-lived individual</div>
+                <div class="notable-value">
+                  <a href="#" style="color:var(--ink-muted)">Private</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- E. Average Age at Death -->
+      <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;gap:0;">
+          <span class="accent-chip"></span>
+          <span class="card-title">Average Age at Death</span>
+        </div>
+        <div class="card-body">
+          <div class="avg-age-display">
+            <span class="avg-age-number">57</span>
+            <span class="avg-age-unit">years</span>
+            <span class="avg-age-label">average age at death</span>
+          </div>
+          <div class="avg-gender-rows">
+            <div class="avg-gender-row">
+              <span class="avg-gender-label">
+                <span class="gender-dot" style="background:var(--blue);flex-shrink:0;"></span>
+                Male
+              </span>
+              <div class="avg-mini-bar-wrap">
+                <div class="avg-mini-bar" style="width:89%;background:var(--blue);"></div>
+              </div>
+              <span class="avg-gender-val">56 yrs</span>
+            </div>
+            <div class="avg-gender-row">
+              <span class="avg-gender-label">
+                <span class="gender-dot" style="background:var(--rose);flex-shrink:0;"></span>
+                Female
+              </span>
+              <div class="avg-mini-bar-wrap">
+                <div class="avg-mini-bar" style="width:92%;background:var(--rose);"></div>
+              </div>
+              <span class="avg-gender-val">58 yrs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-col -->
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="side-col">
+
+      <!-- Box 1: Foundation links -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#2f5d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="10" y1="2" x2="10" y2="18"></line><line x1="10" y1="7" x2="4.5" y2="11"></line><line x1="10" y1="7" x2="15.5" y2="11"></line>
+          </svg>
+          <span class="side-card-title">Stichting Schu-y-i-ij-t</span>
+        </div>
+        <div class="side-card-body">
+          <a href="#" class="side-link">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="6" height="6" rx="1.5"></rect><rect x="12" y="2" width="6" height="6" rx="1.5"></rect><rect x="7" y="12" width="6" height="6" rx="1.5"></rect>
+              <line x1="5" y1="8" x2="5" y2="10"></line><line x1="15" y1="8" x2="15" y2="10"></line>
+              <line x1="5" y1="10" x2="15" y2="10"></line><line x1="10" y1="10" x2="10" y2="12"></line>
+            </svg>
+            Default chart
+          </a>
+          <a href="#" class="side-link">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="10" cy="7" r="3.5"></circle><path d="M3 18c0-3.866 3.134-7 7-7s7 3.134 7 7"></path>
+            </svg>
+            Default individual
+          </a>
+          <a href="#" class="side-link">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="10" cy="7" r="3.5"></circle><path d="M3 18c0-3.866 3.134-7 7-7s7 3.134 7 7"></path>
+              <line x1="15" y1="2" x2="15" y2="6"></line><line x1="13" y1="4" x2="17" y2="4"></line>
+            </svg>
+            Request a new user account
+          </a>
+        </div>
+      </div>
+
+      <!-- Box 2: Slide Show -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#2f5d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="16" height="12" rx="1.5"></rect>
+            <polygon points="8,8 14,10 8,12"></polygon>
+          </svg>
+          <span class="side-card-title">Slide Show</span>
+        </div>
+        <div class="side-empty">
+          <div class="side-empty-img">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" stroke="#c8bfb4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="6" width="32" height="24" rx="2"></rect>
+              <circle cx="14" cy="16" r="3"></circle>
+              <path d="M4 26l9-7 6 5 5-4 12 9"></path>
+            </svg>
+          </div>
+          <p class="side-empty-text">This family tree has no images to display.</p>
+        </div>
+      </div>
+
+      <!-- Box 3: On This Day -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#2f5d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="14" height="14" rx="1.5"></rect>
+            <line x1="7" y1="2" x2="7" y2="6"></line><line x1="13" y1="2" x2="13" y2="6"></line>
+            <line x1="3" y1="9" x2="17" y2="9"></line>
+          </svg>
+          <span class="side-card-title">On This Day</span>
+        </div>
+        <div class="side-empty">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#c8bfb4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="22" height="20" rx="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="8"></line><line x1="19" y1="3" x2="19" y2="8"></line>
+            <line x1="3" y1="12" x2="25" y2="12"></line>
+            <line x1="9" y1="17" x2="9" y2="17" stroke-width="2.5"></line>
+            <line x1="14" y1="17" x2="14" y2="17" stroke-width="2.5"></line>
+          </svg>
+          <p class="side-empty-text">No events exist for today.</p>
+        </div>
+      </div>
+
+      <!-- Box 4: Who's Online -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#2f5d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10" cy="10" r="3"></circle><circle cx="10" cy="10" r="7" stroke-dasharray="2 2"></circle>
+          </svg>
+          <span class="side-card-title">Who's Online</span>
+        </div>
+        <div class="online-status">
+          <span class="online-dot"></span>
+          <span>No signed-in and no anonymous users.</span>
+        </div>
+      </div>
+
+    </aside><!-- /side-col -->
+
+  </div><!-- /content-grid -->
+
+</div><!-- /page-wrap -->
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer>
+  <span>Stichting Schu-y-i-ij-t &nbsp;·&nbsp; Genealogy &amp; Family History</span>
+</footer>
+
+<script>
+  // Animate bars on load
+  document.addEventListener('DOMContentLoaded', function () {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) return;
+
+    // Gender bar segments
+    var segs = document.querySelectorAll('.gender-seg');
+    var widths = ['50.1%', '49.5%', '0.4%'];
+    segs.forEach(function(s, i) { s.style.width = '0'; });
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        segs.forEach(function(s, i) {
+          s.style.width = widths[i];
+        });
+      }, 150);
+    });
+
+    // Mini bars
+    var miniBars = document.querySelectorAll('.avg-mini-bar');
+    var mWidths = ['89%', '92%'];
+    miniBars.forEach(function(b, i) { b.style.width = '0'; });
+    requestAnimationFrame(function () {
+      setTimeout(function () {
+        miniBars.forEach(function(b, i) {
+          b.style.width = mWidths[i];
+        });
+      }, 200);
+    });
+  });
+</script>
+
+
+
+</body></html>
