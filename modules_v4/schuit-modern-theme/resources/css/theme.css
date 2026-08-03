@@ -156,12 +156,6 @@ footer,
   gap: 18px;
   height: 60px;
   margin: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.wt-header-content::-webkit-scrollbar {
-  display: none;
 }
 
 .wt-header-content > .col {
