@@ -9,11 +9,22 @@ use Fisharebest\Webtrees\Module\ModuleCustomTrait;
 use Fisharebest\Webtrees\Module\ModuleThemeInterface;
 use Fisharebest\Webtrees\Module\ModuleThemeTrait;
 use Fisharebest\Webtrees\Tree;
+use Fisharebest\Webtrees\View;
 
 return new class () extends AbstractModule implements ModuleCustomInterface, ModuleThemeInterface {
     use ModuleCustomTrait;
     use ModuleThemeTrait {
         genealogyMenu as baseGenealogyMenu;
+    }
+
+    private const VIEW_NAMESPACE = 'schuit-modern-theme';
+
+    public function boot(): void
+    {
+        // Override webtrees core's lists/families-table view to fix an
+        // upstream bug (see resources/views/lists/families-table.phtml).
+        View::registerNamespace(self::VIEW_NAMESPACE, $this->resourcesFolder() . 'views/');
+        View::registerCustomView('::lists/families-table', self::VIEW_NAMESPACE . '::lists/families-table');
     }
 
     public function title(): string
