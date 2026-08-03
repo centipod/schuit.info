@@ -18,6 +18,11 @@ output "backup_access_key_id" {
   value = module.backup_bucket.access_key_id
 }
 
+output "backup_secret_access_key" {
+  value     = module.backup_bucket.secret_access_key
+  sensitive = true
+}
+
 output "route53_hosted_zone_id" {
   value = module.dns.hosted_zone_id
 }

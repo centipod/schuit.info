@@ -48,6 +48,22 @@ mkdir -p \
   /var/www/shared/webtrees/media \
   /var/www/shared/wordpress/wp-content/uploads
 
+# ============================================================
+# Nightly backups (databases + durable file state -> S3)
+# ============================================================
+#
+# The backup script itself and its S3 credentials are deployed separately,
+# not embedded here: `user_data` is queryable via the Lightsail API by
+# anyone with read access to the instance, so it must never contain
+# secrets. See scripts/backup-to-s3.sh and the deployment steps in its
+# header comment. This only wires the cron entry so a fresh instance is
+# ready to run backups as soon as the script + env file are copied over.
+if ! crontab -l 2>/dev/null | grep -q backup-to-s3.sh; then
+  (crontab -l 2>/dev/null; echo "15 2 * * * /opt/genealogy/backup/backup-to-s3.sh >> /var/log/genealogy-backup.log 2>&1") | crontab -
+fi
+touch /var/log/genealogy-backup.log
+chmod 0640 /var/log/genealogy-backup.log
+
 cat >/var/www/shared/env/portal.env <<EOF
 PROJECT_NAME="${project_name}"
 ENVIRONMENT="${environment}"

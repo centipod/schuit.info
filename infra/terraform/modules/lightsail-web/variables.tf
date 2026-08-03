@@ -59,6 +59,12 @@ variable "ssh_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "auto_snapshot_time" {
+  description = "Daily UTC time (HH:00) for Lightsail's automatic instance snapshot."
+  type        = string
+  default     = "03:00"
+}
+
 variable "tags" {
   description = "Tags applied to Lightsail resources."
   type        = map(string)

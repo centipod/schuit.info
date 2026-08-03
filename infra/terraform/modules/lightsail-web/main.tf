@@ -16,7 +16,25 @@ resource "aws_lightsail_instance" "this" {
     project_name       = var.project_name
   })
 
+  add_on {
+    type          = "AutoSnapshot"
+    snapshot_time = var.auto_snapshot_time
+    status        = "Enabled"
+  }
+
   tags = var.tags
+
+  lifecycle {
+    # Lightsail user_data only ever runs once, at first boot - it is not
+    # re-executed on update, so there is nothing for Terraform to "apply" by
+    # replacing the instance. Without this, editing the bootstrap script
+    # (packages, nginx config, anything) makes Terraform destroy+recreate a
+    # live server, wiping any state that only exists on its local disk
+    # (MySQL data directory, webtrees media, WordPress uploads) unless it
+    # has already been backed up elsewhere. Ongoing config/app changes must
+    # go through a separate deploy path (SSH/rsync), not user_data.
+    ignore_changes = [user_data]
+  }
 }
 
 resource "aws_lightsail_static_ip_attachment" "this" {

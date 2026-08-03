@@ -6,6 +6,7 @@ infra/terraform/**/.terraform.lock.hcl
 infra/terraform/**/terraform.tfstate
 infra/terraform/**/terraform.tfstate.*
 infra/terraform/**/tfplan
+infra/terraform/**/tfplan.*
 infra/terraform/**/*.tfplan
 infra/terraform/**/crash.log
 infra/terraform/**/backend.hcl
