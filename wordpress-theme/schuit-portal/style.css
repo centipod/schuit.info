@@ -1831,7 +1831,7 @@ a:hover {
 /* Reviewed portal: two reliable counters and recovered sponsors. */
 .archive-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .schuit-sponsors { padding: 2.5rem; text-align: center; border-top: 1px solid #d8cbb9; }
-.schuit-sponsors__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1.5rem; max-width: var(--schuit-max); margin: 1.5rem auto; }
+.schuit-sponsors__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; max-width: var(--schuit-max); margin: 1.5rem auto; }
 .schuit-sponsors img { width: 120px; max-width: 100%; height: 360px; object-fit: contain; }
 .foundation-links { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #d8cbb9; }
 .foundation-links ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .8rem 2rem; }
@@ -1840,3 +1840,13 @@ a:hover {
 @media (max-width: 600px) { .entry-content { overflow-wrap: anywhere; overflow-x: auto; } }
 
 .site-brand__subtitle, .archive-feature-card h2, .archive-section-head h2, .site-footer h2 { text-transform: none; }
+
+/* Prevent nested grids and a long Dutch heading from expanding the viewport. */
+.archive-home { grid-template-columns: minmax(0, 1fr); }
+.archive-home > *, .archive-hero__copy { min-width: 0; }
+.archive-hero__copy h1 { overflow-wrap: anywhere; hyphens: auto; }
+@media (max-width: 980px) { .archive-hero { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  .schuit-sponsors { padding: 1.5rem .75rem; }
+  .schuit-sponsors__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+}

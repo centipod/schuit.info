@@ -23,7 +23,7 @@ for file in (root/'source').glob('*'):
   value=re.split(r'[\s"<>\\]',value)[0]
   value=urllib.parse.unquote(urllib.parse.urlsplit(value).path)
   p=pathlib.PurePosixPath(value)
-  if '..' in p.parts or p.is_absolute() or p.suffix.lower() not in ['.jpg','.jpeg','.png','.gif','.webp','.svg','.pdf','.doc','.docx','.xls','.xlsx','.zip','.mp3','.mp4']:continue
+  if '..' in p.parts or p.is_absolute() or p.suffix.lower() not in ['.jpg','.jpeg','.png','.gif','.bmp','.tif','.tiff','.webp','.svg','.pdf','.doc','.docx','.xls','.xlsx','.zip','.mp3','.mp4']:continue
   paths.add(str(p))
 
 def fetch(path):
