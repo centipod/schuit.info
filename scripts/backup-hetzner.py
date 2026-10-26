@@ -3,7 +3,7 @@
 Uses the existing WordPress S3 repository credentials, escrowed recovery key and
 35-day snapshot retention. No database credentials leave the encrypted archive.
 """
-import fcntl,hashlib,importlib.util,json,os,pathlib,re,subprocess,sys,tarfile,tempfile,time
+import fcntl,gzip,hashlib,importlib.util,json,os,pathlib,re,shutil,subprocess,sys,tarfile,tempfile,time
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 os.umask(0o077)
 spec=importlib.util.spec_from_file_location('wordpress_backup','/opt/apps/wordpress/backup.py');shared=importlib.util.module_from_spec(spec);spec.loader.exec_module(shared)
@@ -22,8 +22,11 @@ def run(args,**kw):
   raise RuntimeError('Backup/restore subprocess failed: '+(code.group().decode() if code else 'private diagnostics retained on server'))
  return p
 
-def hashes():
- return {str(p.relative_to(BASE)):hashlib.file_digest(p.open('rb'),'sha256').hexdigest() for root in ROOTS for p in sorted((BASE/root).rglob('*')) if p.is_file() and '/cache/' not in str(p)}
+def hashes(archive):
+ # Hash the bytes already captured, not live files that can change between
+ # hashing and archiving (the statistics snapshot updates every minute).
+ with tarfile.open(archive,'r:') as t:
+  return {m.name.removeprefix('data/'):hashlib.file_digest(t.extractfile(m),'sha256').hexdigest() for m in t if m.isfile() and m.name.startswith('data/')}
 
 def checks(container,auth):
  result={}
@@ -35,18 +38,21 @@ def checks(container,auth):
 
 def backup():
  with tempfile.TemporaryDirectory(dir=WORK) as d:
-  folder=pathlib.Path(d);manifest={'created_at':time.time(),'files':hashes(),'counts':checks('wordpress-mariadb',['--defaults-extra-file=/run/secrets/root-client.cnf']),'deployment':json.loads((BASE/'deployment.json').read_text())}
+  folder=pathlib.Path(d);manifest={'created_at':time.time(),'counts':checks('wordpress-mariadb',['--defaults-extra-file=/run/secrets/root-client.cnf']),'deployment':json.loads((BASE/'deployment.json').read_text())}
   for db in DATABASES:
    with (folder/(db+'.sql')).open('wb') as out:
     run(['docker','exec','wordpress-mariadb','mariadb-dump','--defaults-extra-file=/run/secrets/root-client.cnf','--single-transaction','--skip-lock-tables','--hex-blob',db],stdout=out)
    manifest[db+'_sha256']=hashlib.file_digest((folder/(db+'.sql')).open('rb'),'sha256').hexdigest()
-  (folder/'manifest.json').write_text(json.dumps(manifest))
-  archive=folder/'backup.tar.gz'
-  with tarfile.open(archive,'w:gz') as t:
-   t.add(folder/'manifest.json',arcname='manifest.json')
+  captured=folder/'backup.tar'
+  with tarfile.open(captured,'w:') as t:
    for db in DATABASES:t.add(folder/(db+'.sql'),arcname=db+'.sql')
    for root in ROOTS:t.add(BASE/root,arcname='data/'+root,filter=lambda m: None if '/cache/' in m.name or m.name.endswith('/cache') else m)
    t.add('/etc/centipod/schuit',arcname='config')
+  manifest['files']=hashes(captured)
+  (folder/'manifest.json').write_text(json.dumps(manifest))
+  with tarfile.open(captured,'a:') as t:t.add(folder/'manifest.json',arcname='manifest.json')
+  archive=folder/'backup.tar.gz'
+  with captured.open('rb') as src,gzip.open(archive,'wb') as dest:shutil.copyfileobj(src,dest)
   nonce=os.urandom(12);body=MAGIC+nonce+AESGCM(KEY).encrypt(nonce,archive.read_bytes(),MAGIC)
   key=PREFIX+time.strftime('%Y%m%dT%H%M%SZ',time.gmtime())+'.aesgcm'
   shared.transfer('PUT',key,body)
