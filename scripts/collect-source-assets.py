@@ -13,6 +13,7 @@ root=pathlib.Path('working')
 uploads=root/'recovered-uploads'; uploads.mkdir(exist_ok=True)
 paths=set()
 for file in (root/'source').glob('*'):
+ if file.name.startswith('.'): continue
  if file.suffix not in ('.json','.html'): continue
  text=file.read_text()
  for match in re.finditer(r'(?:https?:)?(?:\\/|/){2}[^\s"<>]+',text):

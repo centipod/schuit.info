@@ -213,6 +213,9 @@ function schuit_portal_foundation_links(): array {
     return [
         'Bestuur' => 'bestuur', 'Geslachten' => 'geslachten',
         'Schuit, Schuyt en Schuijt' => 'van-der-schuit', 'Andere namen' => 'andere-namen',
+        'Aantallen wereldwijd' => 'aantallen-wereldwijd',
+        'Grootschippers' => 'grootschippers', 'Wetenswaardigheden' => 'wetenswaardigheden',
+        'Kwartaalblad en nieuwsbrief' => 'kwartaalblad-in-hetzelfde-schu-y-i-ij-tje',
         'Donateurs en sponsors' => 'adverteren', 'Donateurs en vrienden' => 'donateurs',
         'Privacyreglement' => 'privacyreglement', 'Algemene voorwaarden' => 'algemene-voorwaarden',
         'Disclaimer' => 'disclaimer', 'General information' => 'general-information',
@@ -221,11 +224,24 @@ function schuit_portal_foundation_links(): array {
 }
 
 function schuit_portal_sponsors(): void {
-    // Recovered from the legacy banner configuration and its media attachment.
-    $url = wp_get_attachment_url(408);
-    if (!$url) { return; }
+    // The original sidebar used published dfads records. Older banner-plugin
+    // tables contain obsolete advertisements and must not be reactivated.
+    $ads = get_posts(['post_type' => 'dfads', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'ID', 'order' => 'ASC']);
+    if (!$ads) { return; }
     echo '<section class="schuit-sponsors" aria-label="Onze sponsors"><h2>Onze sponsors</h2>';
-    printf('<a href="https://www.exceptionel.nl/" target="_blank" rel="sponsored noopener"><img src="%s" alt="Exceptionel" loading="lazy"></a>', esc_url($url));
+    echo '<div class="schuit-sponsors__grid">';
+    foreach ($ads as $ad) {
+        $html = new WP_HTML_Tag_Processor(wp_kses_post($ad->post_content));
+        while ($html->next_tag()) {
+            if ($html->get_tag() === 'A') { $html->set_attribute('rel', 'sponsored noopener'); }
+            if ($html->get_tag() === 'IMG') {
+                $html->set_attribute('loading', 'lazy');
+                $html->set_attribute('alt', 'Advertentie van ' . $ad->post_title);
+            }
+        }
+        echo '<div class="schuit-sponsors__advert">' . $html->get_updated_html() . '</div>';
+    }
+    echo '</div>';
     printf('<p><a href="%s">Donateurs en sponsors</a></p></section>', esc_url(schuit_portal_page_url('adverteren', '/?page_id=270')));
 }
 
