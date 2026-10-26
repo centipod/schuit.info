@@ -1,0 +1,6 @@
+[Unit]
+Description=Refresh SCHUIT aggregate metrics after completed imports
+After=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec schuit-web php /opt/schuit-scripts/update-metrics.php

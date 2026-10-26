@@ -1,0 +1,7 @@
+[Unit]
+Description=Refresh SCHUIT statistics every minute
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+[Install]
+WantedBy=timers.target

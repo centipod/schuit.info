@@ -1,0 +1,9 @@
+[Unit]
+Description=SCHUIT encrypted backup
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/apps/schuit/scripts/backup-hetzner.py backup
+MemoryMax=2G
+CPUQuota=100%
