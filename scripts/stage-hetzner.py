@@ -39,7 +39,7 @@ text='<?php\n'+''.join("define('"+k+"', "+json.dumps(v)+");\n" for k,v in values
 text+="define('DISABLE_WP_CRON', true); define('DISALLOW_FILE_MODS', true); define('DISALLOW_FILE_EDIT', true); define('AUTOMATIC_UPDATER_DISABLED', true); define('WP_HTTP_BLOCK_EXTERNAL', true); define('FORCE_SSL_ADMIN', true);\n"
 text+="$table_prefix='wp_'; if (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') { $_SERVER['HTTPS']='on'; } if (!defined('ABSPATH')) { define('ABSPATH', __DIR__.'/'); } require_once ABSPATH.'wp-settings.php';\n"
 (config/'wp-config.php').write_text(text)
-(config/'webtrees.ini.php').write_text('; <?php exit; ?>\n'+''.join(k+'="'+v+'"\n' for k,v in {'dbhost':'wordpress-mariadb','dbport':'3306','dbuser':wt['user'],'dbpass':wt['password'],'dbname':wt['database'],'tblpfx':'wt_','base_url':url+'/tree'}.items()))
+(config/'webtrees.ini.php').write_text('; <?php exit; ?>\n'+''.join(k+'="'+v+'"\n' for k,v in {'dbhost':'wordpress-mariadb','dbport':'3306','dbuser':wt['user'],'dbpass':wt['password'],'dbname':wt['database'],'tblpfx':'wt_','base_url':url+'/tree','rewrite_urls':'1'}.items()))
 # Shared repository recovery key is already escrowed in AWS; database secrets are
 # included only inside the encrypted application backup.
 (config/'recovery.json').write_text(json.dumps(recovery))
