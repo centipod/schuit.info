@@ -22,8 +22,11 @@ def save(folder, job):
 
 
 def php(action, identifier):
-    return subprocess.run(['docker', 'exec', 'schuit-web', 'php', '/opt/schuit-scripts/gedcom-worker.php', action, identifier],
+    code = subprocess.run(['docker', 'exec', 'schuit-web', 'php', '/opt/schuit-scripts/gedcom-worker.php', action, identifier],
                           capture_output=True, timeout=2100).returncode
+    if code not in (0, 75) and json.loads((ROOT / identifier / 'status.json').read_text())['state'] not in ('failed', 'completed'):
+        raise RuntimeError('GEDCOM worker exited unexpectedly; private job status retained')
+    return code
 
 
 def run():

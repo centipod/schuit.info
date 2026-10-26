@@ -26,6 +26,7 @@ try {
     foreach (['duplicate'=>$header."0 @I1@ INDI\n0 @I1@ INDI\n0 TRLR\n",'truncated'=>str_replace("0 TRLR\n",'',$valid),
         'trailing'=>$valid."0 @I2@ INDI\n",'empty'=>$header."0 TRLR\n",'not-gedcom'=>'<html>This is not a genealogy file</html>',
         'version7'=>str_replace('5.5.1','7.0',$valid),'level-jump'=>str_replace('1 NAME','3 NAME',$valid),
+        'invalid-utf8'=>str_replace('Zoë',"Zo\xFF",$valid), 'long-id'=>str_replace('@I1@','@'.str_repeat('I',25).'@',$valid),
         'long-line'=>$header."0 @I1@ INDI\n1 NOTE ".str_repeat('x',140000)."\n0 TRLR\n"] as $name=>$data) {
         file_put_contents($folder.'/input.ged',$data); $failed=false;
         try { analyze($folder.'/input.ged',$folder.'/normalized.ged',static function ():void {}); } catch (Throwable) { $failed=true; }

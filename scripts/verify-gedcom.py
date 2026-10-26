@@ -110,6 +110,13 @@ try:
     assert (ROOT/identifier/'original.ged').stat().st_mode & 0o777 == 0o600
     code, body, _ = request(manager,PAGE+'&job='+identifier)
     assert code == 200 and 'Bevestigen en verwerken' in body and 'minder personen' in body
+    # Static, synthetic UI snapshot for visual review. No cookies, tokens or live data.
+    panel = re.search(r'(<div class="wrap schuit-gedcom">.*?</section></div>)', body, re.S).group(1)
+    panel = re.sub(r'<input[^>]+type="hidden"[^>]*>', '', panel)
+    panel = re.sub(r'<form[^>]*>', '<form onsubmit="return false">', panel)
+    css = Path(__file__).parents[1] / 'wordpress-plugins/schuit-gedcom/style.css'
+    snapshot = '<!doctype html><html lang="nl"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>GEDCOM review — synthetic test</title><style>body{font:14px/1.6 system-ui;background:#f0f0f1;padding:20px;color:#1d2327}.button{padding:8px 16px;border:1px solid #2271b1;border-radius:3px;background:white;color:#2271b1}.button-primary{background:#2271b1;color:white}.notice{padding:1px 12px;border-left:4px solid #dba617;background:#fff8df}'+css.read_text()+'</style>'+panel+'</html>'
+    Path('/srv/schuit/gedcom-ui-review.html').write_text(snapshot)
     assert 'Taak niet beschikbaar' in request(other,PAGE+'&job='+identifier)[1]
     assert post(manager,token,identifier,'confirm')[0] == 400
     assert post(other,nonce(request(other,PAGE)[1]),identifier,'cancel')[0] == 400

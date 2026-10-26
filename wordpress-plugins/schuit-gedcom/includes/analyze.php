@@ -54,7 +54,7 @@ function analyze(string $input, string $output, callable $progress): array {
             if ($line === '') { continue; }
             ++$lineNumber;
             if (!mb_check_encoding($line, 'UTF-8') || str_contains($line, "\0") || str_contains($line, "\u{FFFD}")) { throw new \RuntimeException('Ongeldige of niet-converteerbare tekens op regel ' . $lineNumber . '. Exporteer het bronbestand opnieuw als UTF-8.'); }
-            if (!preg_match('/^(\d+) (?:@([^@\s]+)@ )?([A-Za-z0-9_]+)(?: (.*))?$/D', $line, $m)) {
+            if (!preg_match('/^([0-9]) (?:@([A-Za-z0-9:_.-]{1,20})@ )?([_A-Z][_A-Z0-9]*)(?: (.*))?$/D', $line, $m)) {
                 throw new \RuntimeException('Ongeldige GEDCOM-structuur op regel ' . $lineNumber . '.');
             }
             $level = (int)$m[1]; $value = $m[4] ?? '';
@@ -64,6 +64,7 @@ function analyze(string $input, string $output, callable $progress): array {
             $previousLevel = $level;
             if ($level === 0) {
                 ++$records; $recordBytes = 0; $tag = $m[3];
+                if (in_array($tag, ['HEAD','TRLR'], true) && (($m[2] ?? '') !== '' || trim($value) !== '')) { throw new \RuntimeException('Ongeldige HEAD- of TRLR-regel.'); }
                 if ($tag === 'HEAD') { ++$head; }
                 elseif ($tag === 'TRLR') { ++$trailer; }
                 else {
@@ -82,7 +83,10 @@ function analyze(string $input, string $output, callable $progress): array {
             $next = preg_match('/^\d+ NAME /', $line) ? preg_replace('/(?<![ \t])\//', ' /', $line) : $line;
             if ($next !== $line) { ++$normalized; }
             if (fwrite($dst, $next . "\n") === false) { throw new \RuntimeException('Genormaliseerd bestand opslaan mislukt.'); }
-            if ($lineNumber - $lastProgress >= 10000) { $progress($lineNumber, $records); $lastProgress = $lineNumber; }
+            if ($lineNumber - $lastProgress >= 10000) {
+                if (memory_get_usage(true) > 300 * 1024 * 1024 || $records > 500000) { throw new \RuntimeException('Het bestand is te complex voor deze import. Neem contact op met de beheerder.'); }
+                $progress($lineNumber, $records); $lastProgress = $lineNumber;
+            }
         }
         if ($head !== 1 || $trailer !== 1) { throw new \RuntimeException('Exact één HEAD en één TRLR zijn vereist.'); }
         if (!in_array($version, ['5.5', '5.5.1'], true)) { throw new \RuntimeException('Gebruik GEDCOM 5.5 of 5.5.1 voor deze versie van Webtrees.'); }
