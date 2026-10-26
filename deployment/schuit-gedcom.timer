@@ -1,0 +1,8 @@
+[Unit]
+Description=Process SCHUIT GEDCOM uploads in the background
+[Timer]
+OnBootSec=45s
+OnUnitInactiveSec=10s
+Unit=schuit-gedcom.service
+[Install]
+WantedBy=timers.target

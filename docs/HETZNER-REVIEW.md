@@ -27,14 +27,14 @@ The homepage shows only **Personen** and **Gezinnen**. The active database and a
 
 `schuit-metrics.timer` refreshes an atomic aggregate snapshot every minute. A database snapshot transaction prevents inconsistent counts; pending native imports retain the previous complete totals. WordPress reads only the aggregate JSON, not webtrees database credentials. The obsolete fixed metrics file is not used.
 
-Upload GEDCOM through the native webtrees tree-management screen using an existing authorized manager account. The enabled `schuit-import` module preserves the exact original privately, converts the input encoding using webtrees' native filter, and inserts spaces before slash delimiters **only in NAME fields**. URLs, paths and notes remain intact. A synthetic native import test verified original preservation, Unicode, normalization and import staging inside a rolled-back database transaction. WordPress Tools → GEDCOM en aantallen explains this workflow.
+GEDCOM updates now use the WordPress **Tools → GEDCOM-beheer** upload, verification and explicit-confirmation workflow. See [GEDCOM-WORKFLOW.md](GEDCOM-WORKFLOW.md) for permissions, transactional imports, pre-import backups and recovery. The native webtrees normalization hook remains available.
 
 ## Runtime and source ownership
 
 - Source: `centipod/schuit.info`, `/opt/apps/schuit` → immutable release in `/opt/infra/schuit/releases/`.
 - Shared routing, DNS and monitoring: `centipod/hetzner-server`.
 - Compose: `deployment/compose.yaml`; image identity and deployed commits: `/srv/schuit/deployment.json`.
-- Data: `/srv/schuit/{wordpress,uploads,webtrees,webtrees-data,webtrees-media,metrics}`.
+- Data: `/srv/schuit/{wordpress,uploads,webtrees,webtrees-data,webtrees-media,metrics,gedcom-jobs}`.
 - Secrets: `/etc/centipod/schuit`, never Git. GEDCOM originals: `webtrees-data/import-originals`, private and denied by HTTP configuration.
 - Separate databases/users: `wp_schuit`/`schuit_wp`, `wt_schuit`/`schuit_wt`, in existing `wordpress-mariadb`.
 - PHP 8.3.36 with PDO MySQL; webtrees 2.2.6. Non-root application, read-only filesystem except explicit data mounts, 768 MiB/1 CPU limit, internal networks, no published application/database port.
