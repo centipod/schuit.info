@@ -25,15 +25,8 @@ declare(strict_types=1);
       <span class="screen-reader-text">Menu</span>
     </button>
     <nav id="site-navigation" class="site-nav site-header__nav" aria-label="Hoofdmenu">
-      <?php
-      wp_nav_menu([
-          'theme_location' => 'primary',
-          'container' => false,
-          'menu_class' => 'site-nav__list',
-          'fallback_cb' => 'schuit_portal_fallback_menu',
-        ]);
-      ?>
+      <?php schuit_portal_fallback_menu(); ?>
     </nav>
-    <a class="site-header__cta button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open de stamboom</a>
+    <a class="site-header__cta button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open Webtrees</a>
   </div>
 </header>

@@ -2,29 +2,29 @@
 declare(strict_types=1);
 /** @var array<int, array<string, string>> $news_cards */
 
-$news_cards = schuit_portal_home_news_cards(2);
+$news_cards = schuit_portal_home_publication_cards(2);
 $metrics = schuit_portal_webtrees_metrics();
 $feature_cards = [
     [
-        'label' => 'Stamboom',
-        'title' => 'Stamboom',
-        'text' => 'Onderzoek personen, families en familietakken in de online stamboom.',
+        'label' => 'Webtrees',
+        'title' => 'Webtrees',
+        'text' => 'Onderzoek personen, gezinnen en familietakken in onze genealogische database.',
         'url' => home_url('/tree/'),
-        'cta' => 'Naar de stamboom',
+        'cta' => 'Open Webtrees',
     ],
     [
         'label' => 'Publicaties',
-        'title' => 'Verhalen en publicaties',
-        'text' => 'Lees familieverhalen en raadpleeg eerder uitgegeven publicaties.',
+        'title' => 'Publicaties',
+        'text' => 'Raadpleeg onze publicaties over geslachten, familiegeschiedenis en genealogisch onderzoek.',
         'url' => schuit_portal_category_url('publicaties', 5),
         'cta' => 'Bekijk publicaties',
     ],
     [
-        'label' => 'Archief',
-        'title' => 'Beeld en archief',
-        'text' => 'Bekijk beschikbare foto’s, documenten en andere historische bronnen.',
-        'url' => schuit_portal_page_url('van-der-schuit', '/?page_id=225'),
-        'cta' => 'Naar het archief',
+        'label' => 'Stichting',
+        'title' => 'De stichting',
+        'text' => 'Lees over de stichting, het bestuur en de geslachten die wij onderzoeken.',
+        'url' => schuit_portal_page_url('about', '/?page_id=2'),
+        'cta' => 'Over de stichting',
     ],
 ];
 
@@ -36,8 +36,8 @@ get_header();
       <h1>Familiegeschiedenis zorgvuldig bewaard</h1>
       <p>Stichting Schu-y-i-ij-t verzamelt en bewaart gegevens, verhalen, beelden en publicaties over families met de naam Schuyt, Schuit, Schuijt en verwante namen.</p>
       <div class="archive-hero__actions">
-        <a class="button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open de stamboom</a>
-        <a class="button button--ghost" href="<?php echo esc_url(schuit_portal_category_url('publicaties', 5)); ?>">Bekijk het familiearchief</a>
+        <a class="button button--primary" href="<?php echo esc_url(home_url('/tree/')); ?>">Open Webtrees</a>
+        <a class="button button--ghost" href="<?php echo esc_url(schuit_portal_category_url('publicaties', 5)); ?>">Bekijk publicaties</a>
       </div>
     </div>
     <div class="archive-hero__image" aria-hidden="true">
@@ -45,26 +45,16 @@ get_header();
     </div>
   </section>
 
-  <section class="archive-metrics" aria-label="Gegevens uit de stamboom">
+  <section class="archive-metrics" aria-label="Gegevens uit Webtrees">
     <div class="archive-metric">
       <span class="archive-metric__icon">P</span>
       <strong><?php echo esc_html(schuit_portal_metric_value($metrics['individuals'])); ?></strong>
       <span>Personen</span>
     </div>
     <div class="archive-metric">
-      <span class="archive-metric__icon">F</span>
+      <span class="archive-metric__icon">G</span>
       <strong><?php echo esc_html(schuit_portal_metric_value($metrics['families'])); ?></strong>
-      <span>Families</span>
-    </div>
-    <div class="archive-metric">
-      <span class="archive-metric__icon">P</span>
-      <strong><?php echo esc_html(schuit_portal_metric_value($metrics['places'])); ?></strong>
-      <span>Plaatsen</span>
-    </div>
-    <div class="archive-metric">
-      <span class="archive-metric__icon">S</span>
-      <strong><?php echo esc_html(schuit_portal_metric_value($metrics['trees'])); ?></strong>
-      <span>Stamboom</span>
+      <span>Gezinnen</span>
     </div>
   </section>
 
@@ -82,7 +72,7 @@ get_header();
   <section class="archive-lower-grid">
     <div class="archive-news">
       <div class="archive-section-head">
-        <h2>Laatste nieuws</h2>
+        <h2>Recente publicaties</h2>
       </div>
       <div class="archive-news__list">
         <?php foreach ($news_cards as $card) : ?>
@@ -97,7 +87,7 @@ get_header();
           </article>
         <?php endforeach; ?>
       </div>
-      <a class="button button--ghost archive-news__all" href="<?php echo esc_url(schuit_portal_category_url('nieuws', 1)); ?>">Bekijk al het nieuws</a>
+      <a class="button button--ghost archive-news__all" href="<?php echo esc_url(schuit_portal_category_url('publicaties', 5)); ?>">Alle publicaties</a>
     </div>
 
     <aside class="archive-about">
@@ -108,5 +98,6 @@ get_header();
       <a href="<?php echo esc_url(schuit_portal_page_url('about', '/?page_id=2')); ?>">Lees meer over de stichting</a>
     </aside>
   </section>
+  <?php schuit_portal_sponsors(); ?>
 </main>
 <?php get_footer(); ?>

@@ -1827,3 +1827,13 @@ a:hover {
     min-height: 9rem;
   }
 }
+
+/* Reviewed portal: two reliable counters and recovered sponsors. */
+.archive-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.schuit-sponsors { padding: 2.5rem; text-align: center; border-top: 1px solid #d8cbb9; }
+.schuit-sponsors img { width: min(100%, 420px); height: auto; object-fit: contain; }
+.foundation-links { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #d8cbb9; }
+.foundation-links ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .8rem 2rem; }
+.entry-content img { max-width: 100%; height: auto; }
+.entry-content table { max-width: 100%; }
+@media (max-width: 600px) { .entry-content { overflow-wrap: anywhere; overflow-x: auto; } }
