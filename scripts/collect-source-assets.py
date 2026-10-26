@@ -4,7 +4,7 @@
 Input/output stay in ignored working/: public source API JSON, then upload files
 and a checksum manifest. Never overwrite an existing website or fetch credentials.
 """
-import concurrent.futures, hashlib, html, json, pathlib, re, urllib.parse, urllib.request
+import concurrent.futures, hashlib, html, json, pathlib, re, subprocess, urllib.parse
 root=pathlib.Path('working')
 uploads=root/'recovered-uploads'; uploads.mkdir(exist_ok=True)
 paths=set()
@@ -28,16 +28,18 @@ def fetch(path):
  for prefix in ['https://www.schuit.info/schuit/schuit/wp-content/uploads/','https://www.schuit.info/schuit/wp-content/uploads/']:
   url=prefix+urllib.parse.quote(path,safe='/')
   try:
-   with urllib.request.urlopen(url,timeout=35) as r:
-    if 'text/html' in r.headers.get('Content-Type',''):raise ValueError('HTML instead of asset')
-    data=r.read(100*1024*1024+1)
-    if len(data)>100*1024*1024:raise ValueError('File exceeds 100 MiB')
-   dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(data)
+   dest.parent.mkdir(parents=True,exist_ok=True)
+   part=dest.with_name(dest.name+'.part')
+   response=subprocess.run(['curl','--fail','--silent','--show-error','--location','--connect-timeout','5','--max-time','60','--max-filesize',str(100*1024*1024),'--output',str(part),'--write-out','%{content_type}',url],capture_output=True,text=True)
+   if response.returncode or 'text/html' in response.stdout:
+    part.unlink(missing_ok=True)
+    raise ValueError('HTTP transfer failed: '+response.stderr.strip())
+   data=part.read_bytes();part.replace(dest)
    return dict(path=path,sha256=hashlib.sha256(data).hexdigest(),bytes=len(data),status='copied',source=url)
   except Exception as e:errors.append(str(e))
  return dict(path=path,status='missing_at_source',errors=errors)
 results=[]
-with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
  for result in pool.map(fetch, sorted(paths)):
   results.append(result)
   if len(results) % 50 == 0: print(str(len(results))+'/'+str(len(paths))+' checked', flush=True)
