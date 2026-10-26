@@ -3,7 +3,7 @@
 Uses the existing WordPress S3 repository credentials, escrowed recovery key and
 35-day snapshot retention. No database credentials leave the encrypted archive.
 """
-import fcntl,hashlib,importlib.util,json,os,pathlib,subprocess,sys,tarfile,tempfile,time
+import fcntl,hashlib,importlib.util,json,os,pathlib,re,subprocess,sys,tarfile,tempfile,time
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 os.umask(0o077)
 spec=importlib.util.spec_from_file_location('wordpress_backup','/opt/apps/wordpress/backup.py');shared=importlib.util.module_from_spec(spec);spec.loader.exec_module(shared)
@@ -16,7 +16,10 @@ KEY=bytes.fromhex(json.loads(pathlib.Path('/etc/centipod/wordpress/backup.json')
 
 def run(args,**kw):
  p=subprocess.run(args,stderr=subprocess.PIPE,**kw)
- if p.returncode:raise RuntimeError('Backup/restore subprocess failed; private output withheld')
+ if p.returncode:
+  (WORK/'last-subprocess-error.log').write_bytes(p.stderr or b'')
+  code=re.search(rb'ERROR [0-9]+(?: \([A-Z0-9]+\))?',p.stderr or b'')
+  raise RuntimeError('Backup/restore subprocess failed: '+(code.group().decode() if code else 'private diagnostics retained on server'))
  return p
 
 def hashes():
@@ -32,7 +35,7 @@ def checks(container,auth):
 
 def backup():
  with tempfile.TemporaryDirectory(dir=WORK) as d:
-  folder=pathlib.Path(d);manifest={'created_at':time.time(),'files':hashes(),'counts':checks('wordpress-mariadb',['--defaults-extra-file=/run/secrets/root-client.cnf'])}
+  folder=pathlib.Path(d);manifest={'created_at':time.time(),'files':hashes(),'counts':checks('wordpress-mariadb',['--defaults-extra-file=/run/secrets/root-client.cnf']),'deployment':json.loads((BASE/'deployment.json').read_text())}
   for db in DATABASES:
    with (folder/(db+'.sql')).open('wb') as out:
     run(['docker','exec','wordpress-mariadb','mariadb-dump','--defaults-extra-file=/run/secrets/root-client.cnf','--single-transaction','--skip-lock-tables','--hex-blob',db],stdout=out)
@@ -69,7 +72,11 @@ def restore():
   run(['docker','run','-d','--name',name,'--network','none','--memory','768m','--cpus','0.5','--pids-limit','128','--env','MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1','--mount',f'type=bind,src={dbdata},dst=/var/lib/mysql',IMAGE,'--innodb-buffer-pool-size=128M'],stdout=subprocess.DEVNULL)
   try:
    for _ in range(90):
-    if subprocess.run(['docker','exec',name,'mariadb-admin','-uroot','ping'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0:break
+    # The image starts a temporary initialization server first (port=0).
+    # Wait for the final server before importing, or initialization can stop
+    # the socket in the middle of a restore that appeared to be ready.
+    ready=subprocess.run(['docker','exec',name,'mariadb','-uroot','-Nse','SELECT @@port'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+    if ready.returncode==0 and ready.stdout.strip()==b'3306':break
     time.sleep(1)
    else:raise RuntimeError('Restore database startup failed')
    for db in DATABASES:
