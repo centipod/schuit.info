@@ -35,3 +35,8 @@ Bootstrap the remote state first with [infra/terraform/bootstrap](infra/terrafor
 De webtrees-container gebruikt nu de huidige release-lijn (`2.2.6`). Als de oude dump een schema-upgrade nodig heeft, laat webtrees die na de eerste start uitvoeren.
 
 De databasecontainers gebruiken een vastgepinde MySQL-versie (`mysql:8.4.5`) zodat de lokale opzet voorspelbaar blijft.
+
+## Hetzner-review
+
+De bijgewerkte reviewomgeving staat op https://schuit.centipod.ai/.
+Zie [het beheer- en migratieverslag](docs/HETZNER-REVIEW.md) voor bronvergelijking, ontbrekende bronfoto's, GEDCOM-import, dynamische aantallen, deployment, back-ups en monitoring.

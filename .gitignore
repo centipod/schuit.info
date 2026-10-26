@@ -11,3 +11,5 @@ infra/terraform/**/*.tfplan
 infra/terraform/**/crash.log
 infra/terraform/**/backend.hcl
 infra/terraform/**/terraform.tfvars
+__pycache__/
+*.pyc

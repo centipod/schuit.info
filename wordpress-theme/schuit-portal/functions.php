@@ -34,12 +34,13 @@ function schuit_portal_card_excerpt(string $content, int $words = 24): string {
     return wp_trim_words($excerpt, $words, '…');
 }
 
-function schuit_portal_home_news_cards(int $limit = 3): array {
+function schuit_portal_home_publication_cards(int $limit = 3): array {
     $cards = [];
     $query = new WP_Query([
         'post_type' => 'post',
         'posts_per_page' => $limit,
         'ignore_sticky_posts' => true,
+        'category_name' => 'publicaties',
     ]);
 
     if ($query->have_posts()) {
@@ -61,26 +62,7 @@ function schuit_portal_home_news_cards(int $limit = 3): array {
         return array_slice($cards, 0, $limit);
     }
 
-    return array_slice([
-        [
-            'eyebrow' => '18 mei 2024',
-            'title' => 'Familie Reünie 2024 in Hoorn',
-            'text' => 'Plannen voor een volgende familie-bijeenkomst blijven hier als achtergrondinformatie beschikbaar.',
-            'url' => home_url('/schuit/?cat=5'),
-        ],
-        [
-            'eyebrow' => '27 april 2024',
-            'title' => 'Nieuwe documenten toegevoegd',
-            'text' => 'Historische documenten en foto’s uit het archief worden stapsgewijs samengebracht in het portal.',
-            'url' => home_url('/schuit/?cat=5'),
-        ],
-        [
-            'eyebrow' => '12 maart 2024',
-            'title' => 'Schuit schepen en onze geschiedenis',
-            'text' => 'De maritieme geschiedenis en familieverhalen blijven belangrijke ankerpunten binnen het project.',
-            'url' => home_url('/schuit/?cat=5'),
-        ],
-    ], 0, $limit);
+    return [];
 }
 
 function schuit_portal_home_story_cards(): array {
@@ -163,44 +145,17 @@ function schuit_portal_webtrees_config(): array {
 }
 
 function schuit_portal_webtrees_metrics(): array {
-    $cached = get_transient('schuit_portal_webtrees_metrics');
-    if (is_array($cached)) {
-        return $cached;
+    // This atomic snapshot is refreshed only after a completed database import.
+    // WordPress receives aggregate counts, not webtrees database credentials.
+    $empty = ['individuals' => null, 'families' => null];
+    $path = getenv('WEBTREES_METRICS_PATH') ?: '/var/www/shared/webtrees/data/metrics.json';
+    if (!is_readable($path)) { return $empty; }
+    $data = json_decode((string) file_get_contents($path), true);
+    if (!is_array($data)) { return $empty; }
+    foreach (array_keys($empty) as $key) {
+        if (!isset($data[$key]) || !is_int($data[$key]) || $data[$key] < 0) { return $empty; }
     }
-
-    $metrics = [
-        'individuals' => null,
-        'families' => null,
-        'places' => null,
-        'trees' => null,
-    ];
-
-    $metrics_path = getenv('WEBTREES_METRICS_PATH') ?: '/var/www/shared/webtrees/data/metrics.json';
-    if (!is_readable($metrics_path)) {
-        set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
-        return $metrics;
-    }
-
-    $json = file_get_contents($metrics_path);
-    if ($json === false) {
-        set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
-        return $metrics;
-    }
-
-    $data = json_decode($json, true);
-    if (!is_array($data)) {
-        set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
-        return $metrics;
-    }
-
-    $metrics['individuals'] = isset($data['individuals']) ? (int) $data['individuals'] : null;
-    $metrics['families'] = isset($data['families']) ? (int) $data['families'] : null;
-    $metrics['places'] = isset($data['places']) ? (int) $data['places'] : null;
-    $metrics['trees'] = isset($data['trees']) ? (int) $data['trees'] : null;
-
-    set_transient('schuit_portal_webtrees_metrics', $metrics, 30 * MINUTE_IN_SECONDS);
-
-    return $metrics;
+    return $data;
 }
 
 function schuit_portal_metric_value(?int $value): string {
@@ -213,6 +168,11 @@ function schuit_portal_metric_value(?int $value): string {
 
 function schuit_portal_page_url(string $slug, string $fallback): string {
     $page = get_page_by_path($slug);
+    if (!$page instanceof WP_Post) {
+        // Legacy pages such as Bestuur are children of De stichting.
+        $matches = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'name' => $slug, 'posts_per_page' => 1]);
+        $page = $matches[0] ?? null;
+    }
 
     if ($page instanceof WP_Post) {
         return get_permalink($page);
@@ -236,22 +196,53 @@ function schuit_portal_category_url(string $slug, int $fallback_id): string {
 
 function schuit_portal_fallback_menu(): void {
     $items = [
-        ['label' => 'Home', 'url' => home_url('/')],
-        ['label' => 'Familiearchief', 'url' => schuit_portal_category_url('publicaties', 5)],
-        ['label' => 'Nieuws', 'url' => schuit_portal_category_url('nieuws', 1)],
-        ['label' => 'Over de stichting', 'url' => schuit_portal_page_url('about', '/?page_id=2')],
-        ['label' => 'Contact', 'url' => 'mailto:info@stichtingschu-y-i-ij-t.nl'],
+        ['Home', home_url('/')],
+        ['Publicaties', schuit_portal_category_url('publicaties', 5)],
+        ['De stichting', schuit_portal_page_url('about', '/?page_id=2')],
+        ['Webtrees', home_url('/tree/')],
+        ['Contact', schuit_portal_page_url('contact', '/contact/')],
     ];
-
     echo '<ul class="site-nav__list">';
-    foreach ($items as $item) {
-        printf(
-            '<li><a href="%s">%s</a></li>',
-            esc_url($item['url']),
-            esc_html($item['label'])
-        );
+    foreach ($items as [$label, $url]) {
+        printf('<li><a href="%s">%s</a></li>', esc_url($url), esc_html($label));
     }
     echo '</ul>';
+}
+
+function schuit_portal_foundation_links(): array {
+    return [
+        'Bestuur' => 'bestuur', 'Geslachten' => 'geslachten',
+        'Schuit, Schuyt en Schuijt' => 'van-der-schuit', 'Andere namen' => 'andere-namen',
+        'Aantallen wereldwijd' => 'aantallen-wereldwijd',
+        'Grootschippers' => 'grootschippers', 'Wetenswaardigheden' => 'wetenswaardigheden',
+        'Kwartaalblad en nieuwsbrief' => 'kwartaalblad-in-hetzelfde-schu-y-i-ij-tje',
+        'Donateurs en sponsors' => 'adverteren', 'Donateurs en vrienden' => 'donateurs',
+        'Privacyreglement' => 'privacyreglement', 'Algemene voorwaarden' => 'algemene-voorwaarden',
+        'Disclaimer' => 'disclaimer', 'General information' => 'general-information',
+        'Links' => 'links',
+    ];
+}
+
+function schuit_portal_sponsors(): void {
+    // The original sidebar used published dfads records. Older banner-plugin
+    // tables contain obsolete advertisements and must not be reactivated.
+    $ads = get_posts(['post_type' => 'dfads', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'ID', 'order' => 'ASC']);
+    if (!$ads) { return; }
+    echo '<section class="schuit-sponsors" aria-label="Onze sponsors"><h2>Onze sponsors</h2>';
+    echo '<div class="schuit-sponsors__grid">';
+    foreach ($ads as $ad) {
+        $html = new WP_HTML_Tag_Processor(wp_kses_post($ad->post_content));
+        while ($html->next_tag()) {
+            if ($html->get_tag() === 'A') { $html->set_attribute('rel', 'sponsored noopener'); }
+            if ($html->get_tag() === 'IMG') {
+                $html->set_attribute('loading', 'lazy');
+                $html->set_attribute('alt', 'Advertentie van ' . $ad->post_title);
+            }
+        }
+        echo '<div class="schuit-sponsors__advert">' . $html->get_updated_html() . '</div>';
+    }
+    echo '</div>';
+    printf('<p><a href="%s">Donateurs en sponsors</a></p></section>', esc_url(schuit_portal_page_url('adverteren', '/?page_id=270')));
 }
 
 function schuit_portal_fallback_content(string $slug): array {
