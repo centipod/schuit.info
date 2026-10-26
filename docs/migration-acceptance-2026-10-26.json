@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-26",
+  "review_url": "https://schuit.centipod.ai",
+  "source_commit": "5e8b4c18f5d79228defde3142ef2d0d300ce70f5",
+  "infrastructure_commit": "491c835ac705ab88b5601ff247202a20a53c7187",
+  "image": "sha256:f1df61ac19ee71aaacb4eaa506eab158a11058f8c66d2899ee52749c828d4c60",
+  "content": {
+    "pages": {
+      "source_count": 23,
+      "review_count": 24,
+      "missing_ids": [],
+      "text_differences": []
+    },
+    "posts": {
+      "source_count": 81,
+      "review_count": 81,
+      "missing_ids": [],
+      "text_differences": []
+    }
+  },
+  "http_pages_checked": 106,
+  "http_assets_checked": 298,
+  "failed_http_checks": 0,
+  "legacy_source_links": 0,
+  "uploads_recovered": 688,
+  "uploads_bytes": 186732263,
+  "missing_source_paths": [
+    "2013/05/Chris-vertelt-over-de-website-1024x768.jpg",
+    "2013/05/Chris-vertelt-over-de-website-150x150.jpg",
+    "2013/05/Chris-vertelt-over-de-website.jpg",
+    "2013/05/De-oude-Wieck-rechts-en-nieuwe-voorzitter-Saskia.-1024x768.jpg",
+    "2013/05/De-oude-Wieck-rechts-en-nieuwe-voorzitter-Saskia.-150x150.jpg",
+    "2013/05/De-oude-Wieck-rechts-en-nieuwe-voorzitter-Saskia..jpg",
+    "2013/05/Grootschipper-Wieck-1024x964.jpg",
+    "2013/05/Grootschipper-Wieck-150x150.jpg",
+    "2013/05/Grootschipper-Wieck.jpg",
+    "2013/05/Schuijtjeskade-1024x367.jpg",
+    "2013/05/Schuijtjeskade-150x150.jpg",
+    "2013/05/Schuijtjeskade.jpg",
+    "2013/05/Watertaxi-1024x768.jpg",
+    "2013/05/Watertaxi-150x150.jpg",
+    "2013/05/Watertaxi.jpg",
+    "2013/05/aandachtig-publiek-1024x768.jpg",
+    "2013/05/aandachtig-publiek-150x150.jpg",
+    "2013/05/aandachtig-publiek.jpg"
+  ],
+  "active_sponsor_adverts": 8,
+  "webtrees_individuals": 98014,
+  "webtrees_families": 46018,
+  "fresh_gedcom_export_counts_match": true,
+  "export_name_normalization_changes": 0,
+  "temporary_wordpress_login_test": "passed and test account removed",
+  "native_gedcom_import_integration": "passed with fixture transaction rolled back",
+  "mobile_viewport_width": 390,
+  "mobile_document_width": 390,
+  "production_dns_cutover": false
+}
