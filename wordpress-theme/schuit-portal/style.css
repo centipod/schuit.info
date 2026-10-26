@@ -1837,3 +1837,5 @@ a:hover {
 .entry-content img { max-width: 100%; height: auto; }
 .entry-content table { max-width: 100%; }
 @media (max-width: 600px) { .entry-content { overflow-wrap: anywhere; overflow-x: auto; } }
+
+.site-brand__subtitle, .archive-feature-card h2, .archive-section-head h2, .site-footer h2 { text-transform: none; }

@@ -168,6 +168,11 @@ function schuit_portal_metric_value(?int $value): string {
 
 function schuit_portal_page_url(string $slug, string $fallback): string {
     $page = get_page_by_path($slug);
+    if (!$page instanceof WP_Post) {
+        // Legacy pages such as Bestuur are children of De stichting.
+        $matches = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'name' => $slug, 'posts_per_page' => 1]);
+        $page = $matches[0] ?? null;
+    }
 
     if ($page instanceof WP_Post) {
         return get_permalink($page);
