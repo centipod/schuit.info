@@ -27,6 +27,14 @@ The upload is retained unchanged. Normalization converts to UTF-8 and adds missi
 
 Publish source to GitHub before deployment. Extract the exact Git archive into `/opt/infra/schuit/releases/<commit>` and execute that release's `scripts/deploy-gedcom.py <commit>`. It creates the private mount/locks, switches the source symlink, recreates only `schuit-web`, activates the plugin, installs the timer, waits for health and records the deployed revision. The container image is unchanged.
 
+Before a subsequent release, ensure no analysis/import is running or queued; do not recreate the container during a genealogy import. Schedule updates outside upload processing.
+
 `tests/gedcom-workflow.php` checks valid LF/CRLF/CR, UTF-16, Windows-1252 and malformed fixtures. `tests/gedcom-transaction.php` exercises the native importer using a synthetic private tree within an outer rolled-back transaction; it tests successful import, completion marker, rollback on count mismatch and modified-file rejection. Production tree data must not be replaced for testing. HTTPS acceptance uses temporary accounts and synthetic uploads without confirming an import into the real tree.
 
 After deployment, verify the existing complete GEDCOM export in analysis-only mode, HTTPS permissions/CSRF/upload/status, public website/webtrees counts, worker monitoring, encrypted backup and isolated restore. Retain the previous source release for code rollback. Restoring actual tree data requires the encrypted pre-import snapshot and an explicit recovery decision; do not blindly restore the entire database over unrelated subsequent edits.
+
+## Accepted review deployment — 26 October 2026
+
+Application `2218279c160f890ac97a9db135dbadcff1447a57`; monitoring `c1a19c1522608e88c41d86794e41e3e6e3d5a8c2`. The PHP image is unchanged. All 15 parser fixtures, 15 HTTPS acceptance checks, synthetic native import, completion marker, count-mismatch rollback and file-tamper rejection passed on Hetzner. The original export was analyzed without import: 144,045 records, 98,014 individuals, 46,018 families, UTF-8 / GEDCOM 5.5.1, no missing references or normalization changes. All temporary users and jobs were removed.
+
+The verification screen was visually inspected using a sanitized synthetic render. Public portal, webtrees, backups and GEDCOM worker all report up on status.centipod.io. Fresh S3 backup and isolated restore succeeded, validating both databases and 14,231 files; restore finished at 18:39:52 UTC. Existing genealogical data and public-domain DNS were unchanged.
