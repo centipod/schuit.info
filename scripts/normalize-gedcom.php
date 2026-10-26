@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
-require __DIR__.'/../modules_v4/schuit-import/normalize.php';
+require is_file(__DIR__.'/../modules_v4/schuit-import/normalize.php')
+    ? __DIR__.'/../modules_v4/schuit-import/normalize.php'
+    : '/var/www/html/tree/modules_v4/schuit-import/normalize.php';
 [$script,$source,$destination]=$argv;
 if(realpath($source)===realpath($destination) || file_exists($destination)){throw new RuntimeException('Refusing to overwrite original or existing output');}
 $input=fopen($source,'rb');$output=fopen($destination,'xb');chmod($destination,0600);

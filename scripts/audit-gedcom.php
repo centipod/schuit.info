@@ -5,6 +5,7 @@ $p=new PDO('mysql:host='.$c['dbhost'].';dbname='.$c['dbname'].';charset=utf8mb4'
 $prefix=$c['tblpfx'];if(!preg_match('/^[a-zA-Z0-9_]+$/',$prefix)){throw new RuntimeException('Invalid prefix');}
 $counts=['individuals'=>0,'families'=>0,'chunks'=>0,'chunks_with_payload'=>0];
 foreach($p->query("SELECT chunk_data FROM {$prefix}gedcom_chunk WHERE imported=1 ORDER BY gedcom_chunk_id") as $row){
+ $row['chunk_data'] = (string) $row['chunk_data'];
  $counts['individuals']+=preg_match_all('/(?:^|[\r\n])0 @[^@]+@ INDI(?:[\r\n]|$)/',$row['chunk_data']);
  $counts['families']+=preg_match_all('/(?:^|[\r\n])0 @[^@]+@ FAM(?:[\r\n]|$)/',$row['chunk_data']);
  $counts['chunks']++;
