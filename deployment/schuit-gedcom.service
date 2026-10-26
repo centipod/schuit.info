@@ -1,0 +1,10 @@
+[Unit]
+Description=SCHUIT private GEDCOM verification and confirmed import queue
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/apps/schuit/scripts/gedcom-worker.py
+TimeoutStartSec=3600
+MemoryMax=2G
+CPUQuota=100%

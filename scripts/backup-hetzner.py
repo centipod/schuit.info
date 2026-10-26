@@ -9,7 +9,7 @@ os.umask(0o077)
 spec=importlib.util.spec_from_file_location('wordpress_backup','/opt/apps/wordpress/backup.py');shared=importlib.util.module_from_spec(spec);spec.loader.exec_module(shared)
 BASE=pathlib.Path('/srv/schuit');WORK=pathlib.Path('/srv/schuit-backup-work');WORK.mkdir(mode=0o700,exist_ok=True)
 PREFIX='test/application-files/wordpress/schuit-platform/';MAGIC=b'SCHUIT-BACKUP-v1\n'
-ROOTS=['wordpress','uploads','webtrees','webtrees-data','webtrees-media','metrics']
+ROOTS=['wordpress','uploads','webtrees','webtrees-data','webtrees-media','metrics','gedcom-jobs']
 DATABASES={'wp_schuit':['wp_posts','wp_users'],'wt_schuit':['wt_individuals','wt_families','wt_user']}
 IMAGE='mariadb@sha256:250e1609e93c0e6aecf64bfbab2d84d5e89d2481540fe77447ff6c855c3b1873'
 KEY=bytes.fromhex(json.loads(pathlib.Path('/etc/centipod/wordpress/backup.json').read_text())['key_hex'])

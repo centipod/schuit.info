@@ -58,6 +58,18 @@ return new class extends AbstractModule implements ModuleCustomInterface {
     public function customModuleAuthorName(): string { return 'Centipod'; }
     public function customModuleVersion(): string { return '1.0.0'; }
     public function boot(): void {
+        if (PHP_SAPI !== 'cli' && getenv('SCHUIT_GEDCOM_JOBS')) {
+            $directory = getenv('SCHUIT_GEDCOM_JOBS');
+            $lock = fopen($directory . '/webtrees.lock', 'c');
+            if (!$lock || is_file($directory . '/maintenance') || !flock($lock, LOCK_SH | LOCK_NB)) {
+                http_response_code(503);
+                header('Retry-After: 60');
+                header('Content-Type: text/html; charset=UTF-8');
+                echo '<!doctype html><html lang="nl"><meta name="viewport" content="width=device-width"><title>Stamboom wordt bijgewerkt</title><main style="max-width:640px;margin:12vh auto;padding:24px;font-family:system-ui"><h1>De stamboom wordt bijgewerkt</h1><p>We verwerken een nieuw GEDCOM-bestand. Probeer het over enkele minuten opnieuw. De overige website blijft beschikbaar.</p><a href="/">Terug naar de website</a></main></html>';
+                exit;
+            }
+            register_shutdown_function(static function () use ($lock): void { flock($lock, LOCK_UN); fclose($lock); });
+        }
         $container = Registry::container();
         $container->set(TreeService::class, new SchuitImportTreeService($container->get(GedcomImportService::class)));
     }
