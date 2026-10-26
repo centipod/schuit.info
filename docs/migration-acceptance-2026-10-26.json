@@ -1,7 +1,7 @@
 {
   "date": "2026-10-26",
   "review_url": "https://schuit.centipod.ai",
-  "source_commit": "5e8b4c18f5d79228defde3142ef2d0d300ce70f5",
+  "source_commit": "f0e26c79fc8dd1e9663948d4ac1a1b631337562d",
   "infrastructure_commit": "491c835ac705ab88b5601ff247202a20a53c7187",
   "image": "sha256:f1df61ac19ee71aaacb4eaa506eab158a11058f8c66d2899ee52749c828d4c60",
   "content": {
@@ -53,5 +53,14 @@
   "native_gedcom_import_integration": "passed with fixture transaction rolled back",
   "mobile_viewport_width": 390,
   "mobile_document_width": 390,
-  "production_dns_cutover": false
+  "production_dns_cutover": false,
+  "backup_success_at": "2026-10-26T17:51:20.416570+00:00",
+  "restore_success_at": "2026-10-26T17:52:04.057090+00:00",
+  "restore_files_verified": 14227,
+  "backup_snapshot_hash_regression": "passed",
+  "status_services_up": [
+    "schuit",
+    "schuit-webtrees",
+    "schuit-backups"
+  ]
 }

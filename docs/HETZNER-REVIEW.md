@@ -51,12 +51,12 @@ These MariaDB snapshots are daily recovery points, not PostgreSQL-style continuo
 
 S3 uses the existing WordPress repository, prefix `test/application-files/wordpress/schuit-platform/`, 35-day lifecycle and existing off-server escrowed recovery key. Archives contain both SQL dumps, persistent files, private configuration and the deployment manifest. The key is never included in plaintext alongside the archive.
 
-A backup is uploaded, downloaded and hash-checked. Restore testing verifies authenticated decryption, every recorded file checksum and both SQL dumps, imports into an isolated disposable MariaDB container with no network/ports, checks database counts and removes the container. Read `/srv/schuit/backup-state.json` for the actual latest outcomes. Manually trigger the systemd backup/restore services after a substantive migration or import.
+File hashes are calculated from the captured archive bytes, so a changing live statistics snapshot cannot invalidate the backup. A backup is uploaded, downloaded and hash-checked. Restore testing verifies authenticated decryption, every recorded file checksum and both SQL dumps, imports into an isolated disposable MariaDB container with no network/ports, checks database counts and removes the container. Read `/srv/schuit/backup-state.json` for the actual latest outcomes. Manually trigger the systemd backup/restore services after a substantive migration or import.
 
 https://status.centipod.io has SCHUIT review, SCHUIT Webtrees and SCHUIT backups entries. The application probes cover HTTPS and shared database/container health; the backup probe checks backup and restore freshness. Existing host monitoring alerts also cover SCHUIT container health, overdue/failed backups/restores and inactive statistics/backup timers.
 
 ## Acceptance and remaining review
 
-See `migration-acceptance-2026-10-26.json` and `public-upload-manifest.json`. WordPress HTTPS sign-in/dashboard passed with a temporary account that was removed. Existing account credentials are preserved. Public webtrees routing, counts and private-record restrictions were checked; an owner should also review their usual existing webtrees account and workflows.
+The final encrypted backup and isolated restore succeeded at 17:52 UTC on 26 October 2026, checking both databases and 14,227 files. See `migration-acceptance-2026-10-26.json` and `public-upload-manifest.json`. WordPress HTTPS sign-in/dashboard passed with a temporary account that was removed. Existing account credentials are preserved. Public webtrees routing, counts and private-record restrictions were checked; an owner should also review their usual existing webtrees account and workflows.
 
 The only known unavailable source assets are the six historical photographs above. No production DNS switch, original-project deletion or billing cancellation is part of this review deployment.
