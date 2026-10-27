@@ -64,6 +64,8 @@ jobs:
       - run: gzip -dc .ci/candidate.tar.gz | docker load
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
+      - name: Import-format POC browser checks (synthetic data, localhost only)
+        run: node tools/gedcom_poc/browser-check.cjs
       - run: bash ci/browser.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
