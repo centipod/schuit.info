@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require $argv[1] ?? __DIR__ . '/../docker/login-throttle.php';
+require_once $argv[1] ?? __DIR__ . '/../docker/login-throttle.php';
 use function Schuit\Security\{attempt,loginTarget};
 function check(bool $ok, string $label): void { if (!$ok) { throw new RuntimeException($label); } }
 $base=['REQUEST_METHOD'=>'POST','SCRIPT_FILENAME'=>'/var/www/html/tree/index.php'];
