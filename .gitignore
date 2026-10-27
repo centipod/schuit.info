@@ -13,3 +13,7 @@ infra/terraform/**/backend.hcl
 infra/terraform/**/terraform.tfvars
 __pycache__/
 *.pyc
+.ci/
+node_modules/
+playwright-report/
+test-results/

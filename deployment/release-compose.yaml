@@ -1,0 +1,52 @@
+# Generated release uses the verified immutable image ID. Only data/configuration
+# are mounted; application code is the same code tested and scanned in CI.
+name: schuit
+services:
+  web:
+    image: SCHUIT_VERIFIED_IMAGE
+    container_name: schuit-web
+    restart: unless-stopped
+    user: '33:33'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 128
+    cgroup_parent: apps.slice
+    environment:
+      SCHUIT_TRUSTED_PROXY_CIDR: '192.168.160.0/20'
+      WEBTREES_METRICS_PATH: /run/schuit-metrics/metrics.json
+      WEBTREES_CONFIG_PATH: /var/www/html/tree/data/config.ini.php
+      SCHUIT_IMPORT_ARCHIVE: /var/www/html/tree/data/import-originals
+      SCHUIT_GEDCOM_JOBS: /var/lib/schuit-gedcom
+      SCHUIT_GEDCOM_TREE_ID: '7'
+    volumes:
+      - /srv/schuit/wordpress/wp-content/languages:/var/www/html/wp-content/languages:ro
+      - /srv/schuit/uploads:/var/www/html/wp-content/uploads:rw
+      - /srv/schuit/webtrees-data:/var/www/html/tree/data:rw
+      - /srv/schuit/webtrees-media:/var/www/html/tree/media:rw
+      - /srv/schuit/metrics:/run/schuit-metrics:rw
+      - /srv/schuit/gedcom-jobs:/var/lib/schuit-gedcom:rw
+      - /etc/centipod/schuit/wp-config.php:/var/www/html/wp-config.php:ro
+      - /etc/centipod/schuit/webtrees.ini.php:/var/www/html/tree/data/config.ini.php:ro
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=256m,uid=33,gid=33
+      - /var/run/apache2:rw,nosuid,noexec,size=4m,uid=33,gid=33
+      - /var/lock/apache2:rw,nosuid,noexec,size=4m,uid=33,gid=33
+    healthcheck:
+      test: [CMD, php, /opt/schuit-scripts/health.php]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+    networks: [database, web]
+networks:
+  database:
+    name: schuit-db
+    external: true
+  web:
+    name: schuit-web
+    internal: true

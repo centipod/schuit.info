@@ -1,0 +1,145 @@
+name: SCHUIT CI and gated deployment
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: schuit-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: Build candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      image_id: ${{ steps.image.outputs.id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - name: Build clean release image
+        run: docker build --pull -f docker/release.Dockerfile --build-arg SOURCE_REVISION="$GITHUB_SHA" --build-arg CI_RUN_ID="$GITHUB_RUN_ID" -t schuit-ci:candidate .
+      - name: Package exact candidate
+        id: image
+        run: |
+          mkdir -p .ci
+          echo "id=$(docker image inspect --format '{{.Id}}' schuit-ci:candidate)" >> "$GITHUB_OUTPUT"
+          docker save schuit-ci:candidate | gzip -1 > .ci/candidate.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: candidate-image
+          path: .ci/candidate.tar.gz
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 7
+  unit:
+    name: Unit tests
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SCHUIT_TEST_IMAGE: schuit-ci:candidate
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with: {name: candidate-image, path: .ci}
+      - run: gzip -dc .ci/candidate.tar.gz | docker load
+      - run: bash ci/unit.sh
+  browser:
+    name: Browser E2E
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SCHUIT_TEST_IMAGE: schuit-ci:candidate
+      PLAYWRIGHT_BROWSERS_PATH: .ci/browsers
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: {node-version: '24', cache: npm}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with: {name: candidate-image, path: .ci}
+      - run: gzip -dc .ci/candidate.tar.gz | docker load
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: bash ci/browser.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: browser-results
+          path: |
+            playwright-report/
+            test-results/
+            .ci/container.log
+          include-hidden-files: true
+          retention-days: 14
+  cve:
+    name: CVE scan
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      SCHUIT_TEST_IMAGE: schuit-ci:candidate
+      SOURCE_REVISION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with: {name: candidate-image, path: .ci}
+      - run: gzip -dc .ci/candidate.tar.gz | docker load
+      - name: Block all MEDIUM, HIGH and CRITICAL findings
+        run: bash ci/scan.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: vulnerability-reports
+          path: .ci/scans/
+          include-hidden-files: true
+          retention-days: 30
+  release-gate:
+    name: Release gate
+    if: always()
+    needs: [build, unit, browser, cve]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every check to succeed; skipped is not success
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json,os,sys
+          checks=json.loads(os.environ['RESULTS'])
+          bad=[name for name,job in checks.items() if job['result']!='success']
+          print('Release blocked: '+', '.join(bad) if bad else 'Release eligible')
+          sys.exit(bool(bad))
+          PY
+  deploy:
+    name: Deploy SCHUIT review
+    needs: [build, release-gate]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    environment: schuit-review
+    concurrency: schuit-review-deployment
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with: {name: candidate-image, path: .ci}
+      - name: Deploy the tested image through the restricted host gate
+        env:
+          DEPLOY_KEY: ${{ secrets.SCHUIT_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SCHUIT_KNOWN_HOSTS }}
+          GH_READ_TOKEN: ${{ github.token }}
+          IMAGE_ID: ${{ needs.build.outputs.image_id }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/schuit
+          chmod 600 ~/.ssh/schuit
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          trap 'rm -f ~/.ssh/schuit' EXIT
+          printf '%s\n' "$GH_READ_TOKEN" | ssh -i ~/.ssh/schuit -o BatchMode=yes -o StrictHostKeyChecking=yes schuit-deploy@94.130.167.83 "deploy $GITHUB_SHA $IMAGE_ID $GITHUB_RUN_ID"

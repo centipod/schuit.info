@@ -1,5 +1,8 @@
 # Schuit lokaal ontwikkelstation
 
+Automated tests and the MEDIUM-or-higher CVE deployment gate are documented in
+[CI/CD](docs/CI-CD.md). Hetzner releases must use the gated GitHub Actions workflow.
+
 Dit project zet WordPress en webtrees lokaal naast elkaar op met aparte databases en een gedeelde visuele laag.
 
 ## Starten
