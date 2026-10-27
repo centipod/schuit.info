@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends $PHPIZE_DEPS \
 FROM centipod-wordpress:php8.3.36-preview-20261021-security1
 USER root
 COPY --from=extensions /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-RUN docker-php-ext-enable pdo_mysql
+RUN docker-php-ext-enable pdo_mysql && a2enmod headers
 COPY docker/schuit-apache.conf /etc/apache2/conf-enabled/schuit.conf
 COPY docker/schuit-php.ini /usr/local/etc/php/conf.d/schuit.ini
 USER 33:33
