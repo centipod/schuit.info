@@ -84,6 +84,11 @@ with zipfile.ZipFile(artifacts / 'wordpress-7.1.3.zip') as archive:
         if item.filename.startswith('wordpress/wp-content/themes/'):
             archive.extract(item,stage)
 (new_wp / 'wp-config.php').write_text('')
+# Nested bind targets must exist under the read-only WordPress mount.
+for name in ['logo.png','banner.png']:
+    (new_wp / name).touch()
+if (base / 'wordpress/.htaccess').is_file():
+    shutil.copyfile(base / 'wordpress/.htaccess', new_wp / '.htaccess')
 for name in ['tree','wp-content/uploads','wp-content/mu-plugins','wp-content/plugins/schuit-gedcom','wp-content/themes/schuit-portal']:
     (new_wp / name).mkdir(parents=True, exist_ok=True)
 new_wt = stage / 'webtrees'
