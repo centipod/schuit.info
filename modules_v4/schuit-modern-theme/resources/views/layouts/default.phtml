@@ -186,5 +186,8 @@ $theme = Registry::container()->get(ModuleThemeInterface::class);
         <?= View::stack('javascript') ?>
 
         <?= Registry::container()->get(ModuleService::class)->findByInterface(ModuleGlobalInterface::class)->map(static fn (ModuleGlobalInterface $module): string => $module->bodyContent())->implode('') ?>
+        <?php if (!\Fisharebest\Webtrees\Auth::check()) : ?>
+            <script defer src="/wp-content/mu-plugins/schuit-analytics.js?v=1.0.0"></script>
+        <?php endif ?>
     </body>
 </html>
