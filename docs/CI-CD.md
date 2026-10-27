@@ -44,6 +44,8 @@ The root-owned receiver independently checks the repository, workflow, current
 main commit and completed job outcomes. It downloads the immutable candidate
 artifact directly from that run, verifies GitHub's artifact digest and image
 revision/run labels, and repeats the CVE scan before changing any running service.
+The host scanner and severity policy are root-owned control files, independently
+installed from published source; candidate application code cannot relax them.
 Application code comes from the tested image; only data, language files and
 restricted configuration are mounted from the server.
 

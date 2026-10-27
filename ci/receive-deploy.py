@@ -170,7 +170,7 @@ def main():
             metadata = json.loads(output(['docker', 'image', 'inspect', image_id]))[0]
             verify_image(metadata, revision, run_id, image_id)
             # Fresh host scan of the exact tested artifact, no saved eligibility reuse.
-            run(['bash', 'ci/scan.sh'], cwd=release_source, env={**os.environ, 'SOURCE_REVISION': revision, 'SCHUIT_TEST_IMAGE': image_id})
+            run(['bash', '/opt/infra/schuit/deploy-gate/scan.sh'], cwd=release_source, env={**os.environ, 'SOURCE_REVISION': revision, 'SCHUIT_TEST_IMAGE': image_id})
             latest_main = json_api('git/ref/heads/main', token)['object']['sha']
             if latest_main != revision:
                 raise ValueError('Main advanced while validating the release; use the newest run')
