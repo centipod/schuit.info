@@ -15,6 +15,8 @@ RUN mkdir -p /build && cd /build \
     && echo 'ce34ddd838f7351d6759068d09793f26755463b4a4610a5a5c0a97b68220d85c  /usr/local/bin/wp' | sha256sum -c - \
     && chmod 755 /usr/local/bin/wp
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+COPY deployment/auth-dependencies/composer.* /build/auth/
+RUN cd /build/auth && composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-plugins --classmap-authoritative
 COPY deployment/webtrees-dependencies/composer.* /build/webtrees/
 RUN cd /build/webtrees && rm -rf vendor && composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-plugins --classmap-authoritative
 
@@ -35,7 +37,8 @@ COPY --chown=33:33 wordpress-mu-plugins/ /var/www/html/wp-content/mu-plugins/
 COPY --chown=33:33 modules_v4/ /var/www/html/tree/modules_v4/
 COPY logo.png banner.png /var/www/html/
 COPY scripts/ /opt/schuit-scripts/
-COPY docker/login-throttle.php docker/runtime-guard.php /opt/schuit-security/
+COPY docker/login-throttle.php docker/runtime-guard.php docker/cognito*.php /opt/schuit-security/
+COPY --from=build /build/auth/vendor/ /opt/schuit-security/vendor/
 COPY docker/schuit-php.ini /usr/local/etc/php/conf.d/schuit.ini
 COPY docker/schuit-apache.conf /etc/apache2/conf-enabled/schuit.conf
 COPY docker/release-vhost.conf /etc/apache2/sites-enabled/000-default.conf
