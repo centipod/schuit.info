@@ -25,6 +25,7 @@ return new class () extends AbstractModule implements ModuleCustomInterface, Mod
         // upstream bug (see resources/views/lists/families-table.phtml).
         View::registerNamespace(self::VIEW_NAMESPACE, $this->resourcesFolder() . 'views/');
         View::registerCustomView('::lists/families-table', self::VIEW_NAMESPACE . '::lists/families-table');
+        View::registerCustomView('::layouts/default', self::VIEW_NAMESPACE . '::layouts/default');
     }
 
     public function title(): string
@@ -44,18 +45,19 @@ return new class () extends AbstractModule implements ModuleCustomInterface, Mod
 
     public function customModuleAuthorName(): string
     {
-        return 'GitHub Copilot';
+        return 'Stichting Schu-y-i-ij-t';
     }
 
     public function customModuleVersion(): string
     {
-        return '0.2.0';
+        return '0.3.0';
     }
 
     public function stylesheets(): array
     {
         return [
-            $this->assetUrl('css/theme.css'),
+            asset('css/webtrees.min.css'),
+            $this->assetUrl('css/theme.css') . '&v=0.3.0',
         ];
     }
 
