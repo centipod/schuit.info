@@ -1,8 +1,16 @@
 """Checks independently applied by the Hetzner deployment receiver."""
+import json
 import re
 
 REPOSITORY = 'centipod/schuit.info'
 REQUIRED_JOBS = {'Build candidate', 'Unit tests', 'Browser E2E', 'CVE scan', 'Release gate'}
+
+def authorized_key(public_key):
+    public_key = public_key.strip()
+    if not re.fullmatch(r'ssh-ed25519 [A-Za-z0-9+/=]+(?: [^\r\n]*)?', public_key):
+        raise ValueError('One Ed25519 public key is required')
+    command = '/usr/bin/sudo /usr/bin/python3 /opt/infra/schuit/deploy-gate/receive-deploy.py "$SSH_ORIGINAL_COMMAND"'
+    return 'restrict,command=' + json.dumps(command) + ' ' + public_key + '\n'
 
 def parse_command(command):
     match = re.fullmatch(r'deploy ([a-f0-9]{40}) (sha256:[a-f0-9]{64}) ([1-9][0-9]{0,19})', command)

@@ -15,6 +15,16 @@ def evidence():
     return run, jobs
 
 class DeployPolicy(unittest.TestCase):
+    def test_forced_command_retains_escaped_argument_quotes(self):
+        import json
+        entry = policy.authorized_key('ssh-ed25519 AAAA test')
+        command, end = json.JSONDecoder().raw_decode(entry[len('restrict,command='):])
+        self.assertTrue(command.endswith('"$SSH_ORIGINAL_COMMAND"'))
+        self.assertIn(r'\"$SSH_ORIGINAL_COMMAND\"', entry)
+        self.assertEqual(entry.count('\n'), 1)
+        with self.assertRaises(ValueError):
+            policy.authorized_key('ssh-ed25519 AAAA\nssh-ed25519 BBBB')
+
     def test_valid_release(self):
         run, jobs = evidence()
         policy.verify_run(run, jobs, SHA, '123', SHA)

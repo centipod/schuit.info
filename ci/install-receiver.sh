@@ -14,7 +14,12 @@ install -m 644 "$source_dir/ci/deploy_policy.py" /opt/infra/schuit/deploy-gate/d
 install -m 755 "$source_dir/ci/receive-deploy.py" /opt/infra/schuit/deploy-gate/receive-deploy.py
 install -d -m 755 -o root -g root /var/lib/schuit-deploy
 install -d -m 755 -o root -g root /var/lib/schuit-deploy/.ssh
-printf 'restrict,command="/usr/bin/sudo /usr/bin/python3 /opt/infra/schuit/deploy-gate/receive-deploy.py \"$SSH_ORIGINAL_COMMAND\"" %s\n' "$(cat "$key_file")" > /var/lib/schuit-deploy/.ssh/authorized_keys
+PYTHONPATH="$source_dir/ci" python3 - "$key_file" <<'PY'
+import sys
+from pathlib import Path
+from deploy_policy import authorized_key
+Path('/var/lib/schuit-deploy/.ssh/authorized_keys').write_text(authorized_key(Path(sys.argv[1]).read_text()))
+PY
 chown root:root /var/lib/schuit-deploy/.ssh/authorized_keys
 chmod 644 /var/lib/schuit-deploy/.ssh/authorized_keys
 # No Docker group membership, arbitrary shell, forwarding, or broad sudo grant.
