@@ -1,0 +1,56 @@
+services:
+  db:
+    image: mariadb:11.4@sha256:836c767286098eb2bb18642d2fecaf72a80e6c391fa82c103ef1216aeda8c38a
+    environment:
+      MARIADB_ROOT_PASSWORD: ${CI_DB_PASSWORD:?Run tests/ci/setup.py first}
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 2s
+      timeout: 5s
+      retries: 45
+    volumes: [database:/var/lib/mysql]
+    networks: [isolated]
+  web:
+    image: ${SCHUIT_TEST_IMAGE:-schuit-ci:local}
+    depends_on:
+      db: {condition: service_healthy}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      CI_FIXTURE: 'synthetic-only'
+      CI_DB_PASSWORD: ${CI_DB_PASSWORD}
+      CI_LOGIN_PASSWORD: ${CI_LOGIN_PASSWORD}
+      SCHUIT_TRUSTED_PROXY_CIDR: '172.30.91.0/24'
+      SCHUIT_GEDCOM_TREE_ID: '1'
+      SCHUIT_GEDCOM_JOBS: /var/lib/schuit-gedcom
+      WEBTREES_METRICS_PATH: /run/schuit-metrics/metrics.json
+      WEBTREES_CONFIG_PATH: /var/www/html/tree/data/config.ini.php
+    volumes:
+      - site:/var/www/html
+      - jobs:/var/lib/schuit-gedcom
+      - metrics:/run/schuit-metrics
+      - ../..:/opt/schuit-repo:ro
+    tmpfs:
+      - /tmp:uid=33,gid=33,mode=1777
+      - /var/run/apache2:uid=33,gid=33
+      - /var/lock/apache2:uid=33,gid=33
+    networks: [isolated]
+  proxy:
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    depends_on: [web]
+    ports: ['127.0.0.1:19443:443']
+    volumes: ['./Caddyfile:/etc/caddy/Caddyfile:ro', 'tls:/data']
+    networks: [isolated, edge]
+networks:
+  edge: {}
+  isolated:
+    internal: true
+    ipam:
+      config: [{subnet: 172.30.91.0/24}]
+volumes:
+  database: {}
+  site: {}
+  jobs: {}
+  metrics: {}
+  tls: {}
