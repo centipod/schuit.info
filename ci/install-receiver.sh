@@ -11,6 +11,7 @@ if ! id schuit-deploy >/dev/null 2>&1; then
 fi
 install -d -m 755 -o root -g root /opt/infra/schuit/deploy-gate
 install -m 644 "$source_dir/ci/deploy_policy.py" /opt/infra/schuit/deploy-gate/deploy_policy.py
+install -m 644 "$source_dir/ci/image_identity.py" /opt/infra/schuit/deploy-gate/image_identity.py
 install -m 755 "$source_dir/ci/receive-deploy.py" /opt/infra/schuit/deploy-gate/receive-deploy.py
 install -m 755 "$source_dir/ci/scan.sh" /opt/infra/schuit/deploy-gate/scan.sh
 install -m 644 "$source_dir/ci/security_policy.py" /opt/infra/schuit/deploy-gate/security_policy.py

@@ -22,6 +22,7 @@ import urllib.request
 import urllib.error
 import zipfile
 from deploy_policy import REPOSITORY, parse_command, verify_run, verify_image
+from image_identity import archive_identity
 
 BASE = Path('/srv/schuit')
 RELEASES = Path('/opt/infra/schuit/releases')
@@ -164,11 +165,23 @@ def main():
         with tempfile.TemporaryDirectory(prefix='schuit-release-', dir='/var/tmp') as temporary:
             work = Path(temporary)
             image_archive = artifact(run_id, token, work)
+            identity = archive_identity(image_archive, image_id)
             release_source = source(revision, work)
             with image_archive.open('rb') as stream:
                 run(['docker', 'load'], stdin=stream)
-            metadata = json.loads(output(['docker', 'image', 'inspect', image_id]))[0]
-            verify_image(metadata, revision, run_id, image_id)
+            # Classic Docker exposes the config digest; containerd exposes the
+            # manifest digest. Both must be cryptographically bound to the exact
+            # GitHub-verified archive. Never resolve the mutable candidate tag.
+            ci_image_id = image_id
+            for local_id in (identity['manifest_id'], identity['config_id']):
+                inspected = subprocess.run(['docker', 'image', 'inspect', local_id], capture_output=True, text=True)
+                if inspected.returncode == 0:
+                    metadata = json.loads(inspected.stdout)[0]
+                    verify_image(metadata, revision, run_id, local_id)
+                    image_id = local_id
+                    break
+            else:
+                raise ValueError('Verified image identities not loaded')
             # Fresh host scan of the exact tested artifact, no saved eligibility reuse.
             run(['bash', '/opt/infra/schuit/deploy-gate/scan.sh'], cwd=release_source, env={**os.environ, 'SOURCE_REVISION': revision, 'SCHUIT_TEST_IMAGE': image_id})
             latest_main = json_api('git/ref/heads/main', token)['object']['sha']
@@ -184,6 +197,7 @@ def main():
             # Keep evidence privately with the deployment, outside application data.
             evidence_path = BASE / 'release-evidence' / run_id
             evidence_path.mkdir(parents=True, mode=0o700)
+            (evidence_path / 'image-identity.json').write_text(json.dumps({**identity, 'ci_image_id': ci_image_id, 'host_image_id': image_id}, indent=2) + '\n')
             shutil.copytree(release_source / '.ci/scans', evidence_path / 'scans')
             activate(release, revision, image_id, run_id)
     print('Verified SCHUIT release deployed and healthy.')
