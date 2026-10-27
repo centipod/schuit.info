@@ -1,6 +1,6 @@
 # SCHUIT AWS sign-in
 
-Status: implementation prepared; not active on Hetzner. Replaces the unmerged Google reCAPTCHA proposal. The mandatory MEDIUM+ CVE gate remains unchanged. Do not deploy until the exact candidate's build, unit, browser and vulnerability checks all pass.
+Status: AWS deployment requested; runtime remediation and release checks in progress. Replaces the unmerged Google reCAPTCHA proposal. The mandatory MEDIUM+ CVE gate remains unchanged. Do not deploy until the exact candidate's build, unit, browser and vulnerability checks all pass.
 
 ## Architecture
 
@@ -16,7 +16,7 @@ Local sessions expire after one hour; native logout clears the current applicati
 
 1. Pass all existing release checks first. Publish application and infrastructure commits before running them. Apply only the reviewed SCHUIT infrastructure plan from the canonical Terraform root; do not roll out unrelated drift. Pool deletion protection/retention are enabled.
 2. Run `php /opt/schuit-scripts/export-auth-accounts.php` inside the deployed web container. Until the new image is deployed, run the reviewed script via stdin. Save its output privately, never in Git or public CI artifacts. Reconcile duplicate/invalid emails and unapproved webtrees accounts. Check Jan's GEDCOM manager role and the administrators explicitly.
-3. Create approved identities with `AdminCreateUser` and `MessageAction=SUPPRESS`; do not transfer local password hashes. Deliver the first-login invitation separately only when the login is ready. Use Cognito's temporary-password/new-password flow and required TOTP enrollment. Do not set a shared password or print passwords in logs.
+3. Run `scripts/prepare-cognito-users.py` against the reviewed private inventory and ready stack. It creates approved identities with `MessageAction=SUPPRESS` and generates an undisclosed unique random password only for new identities. Users choose “Forgot your password?” on first sign-in, verify the code delivered to their existing email address, choose their password and enroll TOTP. Existing Cognito passwords are never reset on rerun; native hashes are never transferred. No unsolicited invitation is sent. The script writes a private configuration with `enabled:false`. Install it with `scripts/install-cognito-config.py` as root via stdin.
 4. After retrieving each new subject, install `/etc/centipod/schuit/cognito.json`, root:www-data, mode 0640. Structure:
 
 ```json
@@ -37,3 +37,7 @@ Rollback: set `enabled:false` in the protected runtime config and invalidate ses
 The local test image overlays the changes onto an existing local base; GitHub CI builds, scans and tests the complete immutable candidate. The current base-image vulnerability backlog can block that candidate even when authentication tests pass.
 
 Official references: [Cognito WAF](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-waf.html), [TOTP exclusions](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-mfa-totp.html), [authorization code and PKCE](https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html), [Dutch managed login localization](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-managed-login.html#managed-login-localization).
+
+## Runtime remediation for deployment
+
+The Debian 13 candidate had 183 blocking OS-package findings with no fixed package versions in its release. The replacement uses digest-pinned official PHP 8.3.36 FPM on Alpine 3.24, updates repository packages at build time and runs minimal Apache + FPM as uid 33 under tini. Application versions, native permissions, isolation and MEDIUM+ gate are unchanged. Both daemons are supervised; the health check verifies Apache, FPM, both databases and the private Cognito broker. Local complete-image scan returned zero blocking findings; the exact amd64 GitHub candidate must independently pass the same gate before deployment.
