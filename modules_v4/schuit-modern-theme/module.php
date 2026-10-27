@@ -26,6 +26,7 @@ return new class () extends AbstractModule implements ModuleCustomInterface, Mod
         View::registerNamespace(self::VIEW_NAMESPACE, $this->resourcesFolder() . 'views/');
         View::registerCustomView('::lists/families-table', self::VIEW_NAMESPACE . '::lists/families-table');
         View::registerCustomView('::layouts/default', self::VIEW_NAMESPACE . '::layouts/default');
+        View::registerCustomView('::login-page', self::VIEW_NAMESPACE . '::login-page');
     }
 
     public function title(): string

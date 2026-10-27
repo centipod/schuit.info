@@ -1,4 +1,6 @@
 const { test, expect } = require('@playwright/test');
+const {captcha} = require('./captcha-helper');
+test.beforeEach(async ({page})=>captcha(page));
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -6,6 +8,7 @@ const password = JSON.parse(fs.readFileSync('.ci/credentials.json', 'utf8')).pas
 const adminPath = '/wp-admin/tools.php?page=schuit-gedcom-import';
 function worker(mode, expected = '') { execFileSync('python3', ['tests/ci/process-jobs.py', mode, expected], { stdio: 'pipe', timeout: 60000 }); }
 async function login(page, username = 'ci_manager') {
+  await captcha(page);
   await page.goto('/wp-login.php');
   await page.locator('#user_login').fill(username);
   await page.locator('#user_pass').fill(password);

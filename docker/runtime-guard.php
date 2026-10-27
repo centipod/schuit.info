@@ -47,3 +47,6 @@ if (PHP_SAPI !== 'cli' && !uploadsAreSafe($_FILES)) {
     exit;
 }
 require_once __DIR__ . '/login-throttle.php';
+
+require_once __DIR__ . '/recaptcha.php';
+\Schuit\Captcha\enforce();

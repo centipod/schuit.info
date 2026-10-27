@@ -35,7 +35,7 @@ COPY --chown=33:33 wordpress-mu-plugins/ /var/www/html/wp-content/mu-plugins/
 COPY --chown=33:33 modules_v4/ /var/www/html/tree/modules_v4/
 COPY logo.png banner.png /var/www/html/
 COPY scripts/ /opt/schuit-scripts/
-COPY docker/login-throttle.php docker/runtime-guard.php /opt/schuit-security/
+COPY docker/login-throttle.php docker/runtime-guard.php docker/recaptcha.php docker/recaptcha-verifier.php /opt/schuit-security/
 COPY docker/schuit-php.ini /usr/local/etc/php/conf.d/schuit.ini
 COPY docker/schuit-apache.conf /etc/apache2/conf-enabled/schuit.conf
 COPY docker/release-vhost.conf /etc/apache2/sites-enabled/000-default.conf
