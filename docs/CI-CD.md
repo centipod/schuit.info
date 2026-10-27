@@ -44,6 +44,11 @@ The root-owned receiver independently checks the repository, workflow, current
 main commit and completed job outcomes. It downloads the immutable candidate
 artifact directly from that run, verifies GitHub's artifact digest and image
 revision/run labels, and repeats the CVE scan before changing any running service.
+Classic Docker reports the config digest as its image ID; the containerd image
+store reports the OCI manifest digest. The receiver hashes the archive's manifest
+and config, checks their linkage and matching classic/OCI layer lists, and accepts
+only those two immutable identities. It never selects the image by a mutable tag.
+The CI and host IDs are retained together in the release evidence.
 The host scanner and severity policy are root-owned control files, independently
 installed from published source; candidate application code cannot relax them.
 Application code comes from the tested image; only data, language files and

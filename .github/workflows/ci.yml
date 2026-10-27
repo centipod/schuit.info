@@ -136,7 +136,8 @@ jobs:
           IMAGE_ID: ${{ needs.build.outputs.image_id }}
         run: |
           set -euo pipefail
-          test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          test -n "$DEPLOY_KEY"
+          test -n "$KNOWN_HOSTS"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/schuit
           chmod 600 ~/.ssh/schuit
