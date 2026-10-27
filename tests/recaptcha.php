@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__ . '/../docker/login-throttle.php';
-require_once __DIR__ . '/../docker/recaptcha.php';
+if (!function_exists('Schuit\\Security\\loginTarget')) { require_once __DIR__ . '/../docker/login-throttle.php'; }
+if (!function_exists('Schuit\\Captcha\\check')) { require_once __DIR__ . '/../docker/recaptcha.php'; }
 use function Schuit\Captcha\check;
 use function Schuit\Captcha\verified;
 use function Schuit\Captcha\loginRequest;

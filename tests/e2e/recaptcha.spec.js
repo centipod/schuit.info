@@ -19,7 +19,7 @@ for(const site of ['wordpress','webtrees']) {
     await page.locator(site==='wordpress'?'#user_login':'#username').fill(site==='wordpress'?'ci_manager':'ci_tree_admin');
     await page.locator(site==='wordpress'?'#user_pass':'#password').fill(password);
     const response=page.waitForResponse(r=>r.request().method()==='POST');
-    await page.locator(site==='wordpress'?'#wp-submit':'button[type=submit]').click();
+    await page.locator(site==='wordpress'?'#wp-submit':'.wt-page-options-login button[type=submit]').click();
     expect((await response).status()).toBe(403);
     await expect(page.getByRole('alert')).toContainText('beveiligingscontrole');
     await page.getByRole('link',{name:'Terug naar aanmelden'}).click();
