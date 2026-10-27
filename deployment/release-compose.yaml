@@ -28,6 +28,7 @@ services:
       - /srv/schuit/webtrees-media:/var/www/html/tree/media:rw
       - /srv/schuit/metrics:/run/schuit-metrics:rw
       - /srv/schuit/gedcom-jobs:/var/lib/schuit-gedcom:rw
+      - /etc/centipod/schuit/cognito.json:/run/secrets/schuit-cognito.json:ro
       - /etc/centipod/schuit/wp-config.php:/var/www/html/wp-config.php:ro
       - /etc/centipod/schuit/webtrees.ini.php:/var/www/html/tree/data/config.ini.php:ro
     tmpfs:
@@ -42,7 +43,33 @@ services:
     logging:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
+    depends_on:
+      cognito: {condition: service_healthy}
     networks: [database, web]
+  cognito:
+    image: SCHUIT_VERIFIED_IMAGE
+    restart: unless-stopped
+    user: '33:33'
+    entrypoint: [php, -S, '0.0.0.0:8081', /opt/schuit-security/cognito-broker.php]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 32
+    cgroup_parent: apps.slice
+    volumes:
+      - /etc/centipod/schuit/cognito.json:/run/secrets/schuit-cognito.json:ro
+    tmpfs: ['/tmp:rw,nosuid,noexec,size=8m,uid=33,gid=33']
+    healthcheck:
+      test: [CMD, php, -r, "exit(@file_get_contents('http://127.0.0.1:8081/health', false, stream_context_create(['http'=>['timeout'=>2]])) === false ? 1 : 0);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+    networks: [web, identity-egress]
 networks:
   database:
     name: schuit-db
@@ -50,3 +77,4 @@ networks:
   web:
     name: schuit-web
     internal: true
+  identity-egress: {}

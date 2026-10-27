@@ -10,6 +10,7 @@ $m=new MigrationService();$m->updateSchema('\\Fisharebest\\Webtrees\\Schema','WT
 DB::table('gedcom')->insert(['gedcom_id'=>1,'gedcom_name'=>'0','title'=>'Synthetic CI family tree','media_folder'=>'','gedcom_filename'=>'fixture.ged','imported'=>1,'private'=>0]);
 $tree=Tree::fromDB(DB::table('gedcom')->where('gedcom_id',1)->first());
 foreach (['THEME_DIR'=>'_schuit-modern-theme_','HIDE_LIVE_PEOPLE'=>'1','SHOW_LIVING_NAMES'=>'1','SHOW_DEAD_PEOPLE'=>'2','SHOW_PRIVATE_RELATIONSHIPS'=>'1'] as $k=>$v) {$tree->setPreference($k,$v);}
+Site::setPreference('THEME_DIR','_schuit-modern-theme_');
 Site::setPreference('LANGUAGE','en-US');Site::setPreference('DEFAULT_GEDCOM','0');Site::setPreference('ALLOW_USER_REGISTRATION','0');
 $user=Registry::container()->get(UserService::class)->create('ci_tree_admin','CI administrator','ci_tree_admin@example.invalid',getenv('CI_LOGIN_PASSWORD'));
 foreach ([UserInterface::PREF_IS_EMAIL_VERIFIED,UserInterface::PREF_IS_ACCOUNT_APPROVED,UserInterface::PREF_IS_ADMINISTRATOR] as $k) {$user->setPreference($k,'1');}

@@ -27,6 +27,7 @@ services:
       WEBTREES_METRICS_PATH: /run/schuit-metrics/metrics.json
       WEBTREES_CONFIG_PATH: /var/www/html/tree/data/config.ini.php
     volumes:
+      - ../../.ci/auth:/run/secrets:ro
       - site:/var/www/html
       - jobs:/var/lib/schuit-gedcom
       - metrics:/run/schuit-metrics
@@ -35,6 +36,14 @@ services:
       - /tmp:uid=33,gid=33,mode=1777
       - /var/run/apache2:uid=33,gid=33
       - /var/lock/apache2:uid=33,gid=33
+    networks: [isolated]
+  cognito:
+    image: ${SCHUIT_TEST_IMAGE:-schuit-ci:local}
+    entrypoint: [php, -S, '0.0.0.0:8081', /opt/schuit-repo/tests/ci/mock-cognito.php]
+    volumes: ['../..:/opt/schuit-repo:ro']
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     networks: [isolated]
   proxy:
     image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f

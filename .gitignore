@@ -17,3 +17,6 @@ __pycache__/
 node_modules/
 playwright-report/
 test-results/
+deployment/auth-dependencies/vendor/
+
+.ci-local.Dockerfile
