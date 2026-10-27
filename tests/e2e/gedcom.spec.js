@@ -85,5 +85,6 @@ test('Webtrees native administrator login and logout work', async ({ page }) => 
   await page.getByRole('button',{name:'sign in',exact:true}).click();await page.goto('/tree/admin');
   await expect(page).toHaveURL(/\/tree\/admin$/);
   const logout=page.getByRole('link',{name:'Sign out',exact:true});await expect(logout).toBeAttached();await logout.click();
+  await expect(page.getByRole('link',{name:'Sign in',exact:true})).toBeVisible();
   await page.goto('/tree/admin');await expect(page).toHaveURL(/\/login/);
 });
