@@ -10,7 +10,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ORIGIN = 'https://schuit.centipod.ai'
-HELPER = '/tmp/schuit-security-tests/tests/webtrees-security-account.php'
+HELPER = Path(__file__).resolve().parents[1] / 'tests/webtrees-security-account.php'
 class Fields(HTMLParser):
     def __init__(self): super().__init__(); self.fields = {}
     def handle_starttag(self, tag, attrs):
@@ -21,7 +21,7 @@ class Redirect(urllib.request.HTTPRedirectHandler):
         assert newurl.startswith(ORIGIN + '/'), 'Unexpected external authentication redirect'
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 def account(*args):
-    p = subprocess.run(['docker','exec','schuit-web','php',HELPER,*args],capture_output=True,text=True,timeout=30)
+    p = subprocess.run(['docker','exec','-i','schuit-web','php','/dev/stdin',*args],input=HELPER.read_text(),capture_output=True,text=True,timeout=30)
     assert p.returncode == 0, 'Private test-account helper failed'
     return json.loads(p.stdout)
 jar = http.cookiejar.CookieJar()
