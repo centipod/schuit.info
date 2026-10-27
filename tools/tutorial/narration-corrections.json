@@ -1,0 +1,33 @@
+{
+  "voice": "Miriam",
+  "model": "eleven_multilingual_v2",
+  "login_url": "https://schuit.centipod.ai/wp-login.php",
+  "clips": [
+    {
+      "id": "login",
+      "languageCode": "nl",
+      "text": "Open de loginpagina via het adres dat nu groot in beeld staat. U komt op de WordPress-loginpagina."
+    },
+    {
+      "id": "upload",
+      "languageCode": "nl",
+      "text": "Kies uw nieuwe GEDCOM-bestand. Het mag maximaal honderd megabyte groot zijn. Klik op Uploaden en controleren. De website controleert het bestand. De huidige genealogische gegevens blijven voorlopig ongewijzigd."
+    },
+    {
+      "id": "stats-prefix",
+      "languageCode": "nl",
+      "text": "Klik op de knop"
+    },
+    {
+      "id": "webtrees-english",
+      "languageCode": "en",
+      "text": "Open web trees."
+    },
+    {
+      "id": "stats-rest",
+      "languageCode": "nl",
+      "text": "Bekijk het blok Statistieken. Hier staan nu twaalf personen en vier gezinnen. Dat klopt met onze controlepagina. Vergelijk bij uw eigen bestand op dezelfde manier de aantallen. De nieuwe gegevens zijn nu verwerkt."
+    }
+  ],
+  "note": "Generate the English product label separately to prevent Dutch phonetics. The rest of the narration remains Dutch."
+}
