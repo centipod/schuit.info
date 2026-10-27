@@ -26,6 +26,22 @@ $snapshot = static function () use ($db, $prefix): array {
     ];
 };
 $before = $snapshot();
+foreach ($argv as $argument) {
+    if (str_starts_with($argument, '--restore-module-statuses=')) {
+        $saved = json_decode(file_get_contents(substr($argument, strlen('--restore-module-statuses='))), true, 512, JSON_THROW_ON_ERROR);
+        $restore = $db->prepare("UPDATE {$prefix}module SET status=? WHERE module_name=?");
+        $db->beginTransaction();
+        try {
+            foreach ($saved['before']['webtrees_modules'] as $module) {
+                if (!str_starts_with($module['module_name'], 'language-') || !in_array($module['status'], ['enabled','disabled'], true)) {
+                    throw new RuntimeException('Invalid saved language module');
+                }
+                $restore->execute([$module['status'], $module['module_name']]);
+            }
+            $db->commit();
+        } catch (Throwable $error) { $db->rollBack(); throw $error; }
+    }
+}
 if (in_array('--apply', $argv, true)) {
     if (!(int)$db->query("SELECT COUNT(*) FROM {$prefix}module WHERE module_name='language-nl'")->fetchColumn()) {
         throw new RuntimeException('Dutch webtrees module is missing');
@@ -34,8 +50,7 @@ if (in_array('--apply', $argv, true)) {
     try {
         $db->exec("INSERT INTO {$prefix}site_setting (setting_name,setting_value) VALUES ('LANGUAGE','nl') ON DUPLICATE KEY UPDATE setting_value='nl'");
         $db->exec("INSERT INTO {$prefix}user_setting (user_id,setting_name,setting_value) SELECT user_id,'language','nl' FROM {$prefix}user ON DUPLICATE KEY UPDATE setting_value='nl'");
-        // Restrict negotiation to Dutch, including previously English sessions.
-        $db->exec("UPDATE {$prefix}module SET status=CASE WHEN module_name='language-nl' THEN 'enabled' ELSE 'disabled' END WHERE module_name LIKE 'language-%'");
+        $db->exec("UPDATE {$prefix}module SET status='enabled' WHERE module_name='language-nl'");
         $db->commit();
     } catch (Throwable $error) {
         $db->rollBack(); throw $error;
