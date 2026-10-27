@@ -1,7 +1,7 @@
 name: schuit
 services:
   web:
-    image: centipod-schuit:php8.3.36-20261027-security2
+    image: centipod-schuit:php8.3.36-20261027-security3
     container_name: schuit-web
     restart: unless-stopped
     user: '33:33'
@@ -13,6 +13,7 @@ services:
     pids_limit: 128
     cgroup_parent: apps.slice
     environment:
+      SCHUIT_TRUSTED_PROXY_CIDR: '192.168.160.0/20'
       WEBTREES_METRICS_PATH: /run/schuit-metrics/metrics.json
       WEBTREES_CONFIG_PATH: /var/www/html/tree/data/config.ini.php
       SCHUIT_IMPORT_ARCHIVE: /var/www/html/tree/data/import-originals
