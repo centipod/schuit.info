@@ -85,3 +85,10 @@ h1, h2, h3, h4 { color: var(--schuit-ink); font-family: inherit; letter-spacing:
 }
 @media print { body.wt-global { background: white; } .wt-main-wrapper { padding: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Neutral facts/statistics tables; chart gender cues keep native colours. */
+[dir] .wt-facts-table { border-collapse: separate; border-spacing: 0; }
+[dir] .wt-facts-table th { background: #eee6db; color: #5d3b24; font-weight: 600; text-align: start; border: 1px solid #e2d8cb; }
+[dir] .wt-facts-table td { background: #fff; border: 1px solid #e2d8cb; }
+[dir] .wt-header-container { padding-left: 1.5rem; padding-right: 1.5rem; }
+@media (max-width: 767px) { [dir] .wt-header-container { padding-left: 1rem; padding-right: 1rem; } }
