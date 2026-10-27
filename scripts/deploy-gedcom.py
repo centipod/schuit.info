@@ -43,7 +43,8 @@ try:
     subprocess.run(['systemctl', 'enable', '--now', 'schuit-gedcom.timer'], check=True)
     manifest_path = Path('/srv/schuit/deployment.json')
     manifest = json.loads(manifest_path.read_text())
-    manifest.update(source_commit=revision, deployed_at=datetime.datetime.now(datetime.timezone.utc).isoformat(), gedcom_plugin='1.0.0')
+    image = subprocess.check_output(['docker', 'inspect', '--format', '{{.Image}}', 'schuit-web'], text=True).strip()
+    manifest.update(source_commit=revision, image=image, deployed_at=datetime.datetime.now(datetime.timezone.utc).isoformat(), gedcom_plugin='1.0.0')
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
 except Exception:
     temporary.symlink_to(old)

@@ -106,8 +106,8 @@ for root in [new_wp,new_wt]:
         path.chmod(0o755 if path.is_dir() else 0o644)
         os.chown(path,33,33)
 
-run(['docker','build','-f',str(release/'docker/hetzner.Dockerfile'),'-t','centipod-schuit:php8.3.36-20261027-security',str(release)])
-run(['docker','run','--rm','--entrypoint','apache2ctl','centipod-schuit:php8.3.36-20261027-security','-t'])
+run(['docker','build','-f',str(release/'docker/hetzner.Dockerfile'),'-t','centipod-schuit:php8.3.36-20261027-security2',str(release)])
+run(['docker','run','--rm','--entrypoint','apache2ctl','centipod-schuit:php8.3.36-20261027-security2','-t'])
 lock = (base / 'gedcom-jobs/host-worker.lock').open('a')
 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
 swapped = []

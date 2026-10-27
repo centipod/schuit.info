@@ -1,7 +1,7 @@
 name: schuit
 services:
   web:
-    image: centipod-schuit:php8.3.36-20261027-security
+    image: centipod-schuit:php8.3.36-20261027-security2
     container_name: schuit-web
     restart: unless-stopped
     user: '33:33'
