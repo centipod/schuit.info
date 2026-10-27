@@ -57,7 +57,7 @@ try:
     session_cookies=[c for c in jar if c.name not in ('schuit_webtrees_visit','x')]
     assert session_cookies and all(c.secure and c.has_nonstandard_attr('HttpOnly') for c in session_cookies)
     results['secure_httponly_sessions']=True
-    status,url,body=fetch('/tree/logout')
+    status,url,body=fetch('/tree/logout', {})
     status,url,body=fetch('/tree/admin')
     assert '/login' in url or status in (401,403)
     results['logout_revokes_admin_access']=True
