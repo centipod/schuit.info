@@ -123,3 +123,77 @@ browser gate. Existing MEDIUM+ CVE and deployment gates remain required.
   also matter in the reverse direction; changing the version line is insufficient)
 - [webtrees GEDCOM compatibility](https://webtrees.net/gedcom/)
 - [Aldfaer export support](https://aldfaerforum.nl/forum/helpdesk/9740-oude-bestanden-2013-overzetten-naar-nieuwe-versie-mogelijk.html)
+
+## Follow-up: upstream module review (27 October 2026)
+
+Reviewed Jefferson49/ExtendedImportExport **v4.3.2** (released 25 October), source
+commit `8979e11f145c6c7485d5de947b163961eaae4cb6`, plus the official release ZIP's
+bundled dependency. The declared licence is GPL-3.0-or-later. No dedicated
+CONTRIBUTING file, automated test suite or GitHub Actions workflows were found
+among the 88 tracked files at this revision. This does not imply the maintainer
+does not test; the README describes manual checks and external validators.
+
+**Revised recommendation:** evaluate and extend this existing PHP module as the
+conversion implementation. Keep our Python POC as an independent comparison
+harness, rather than grow two competing production converters. The module's
+GEDCOM 7 filter explicitly targets **5.5.1 → 7**; it is not an Aldfaer binary
+decoder, universal format converter or proof of full native GEDCOM 7 editing in
+webtrees. Direct core import, module-assisted import and re-export still need
+isolated database tests before selecting the final path.
+
+`review-upstream.php` runs the actual upstream filter engine and filter classes
+with synthetic records and the local webtrees runtime. It does not mock the
+conversion algorithms or connect to a database:
+
+```sh
+php tools/gedcom_poc/review-upstream.php \
+  /private/path/to/webtrees \
+  /private/path/to/official-release/extended_import_export
+```
+
+Observed results:
+
+- Basic 5.5.1 header/shared-note conversion succeeds.
+- Applying that filter directly to 5.5 leaves `VERS 5.5` while deleting CHAR and
+  FORM. Add a source-version guard; do not interpret this as supported 5.5 input.
+- Literal `test@@example.org` remains doubled in the 7 output. GEDCOM 7 interprets
+  non-leading at signs differently; a version-aware text conversion is needed.
+- `30 JAN 1648/9` and a phrase-only date `(during winter)` remain unchanged under
+  a 7 header; the filter handles only some legacy date forms.
+- The old ROMAN calendar becomes `ROMAN`, rather than a documented extension
+  calendar. Unsupported calendars need an explicit mapping or diagnostic.
+- A nested note-reference probe shows the limits of fixed-depth tag rules;
+  establish schema-valid recursive fixtures before proposing a general fix.
+- The separate optimisation filter removes a webtrees note's RESN restriction
+  while retaining its text. This is intentional standardisation, not evidence of
+  an HTTP authorization bypass. It must be an explicit, audited policy choice.
+- A synthetic custom regex hitting its runtime resource limit silently deletes
+  the matching NOTE subtree. `preg_replace(...) ?? ''` is the verified cause.
+  Throw on null and preserve the input instead.
+
+Additional static observations: filter `validate()` validates rule definitions,
+not the resulting genealogy; conversion materialises record arrays in memory;
+the database importer accumulates individual record exceptions rather than
+necessarily aborting the transaction. These need output-validation, scale and
+rollback tests; they were not exercised against a database in this review.
+
+Proposed upstream sequence:
+
+1. Synthetic fixture/CI foundation and the small regex-failure fix.
+2. Source/target version and encoding guards; correct escaping and date mappings.
+3. Optional structured diagnostics: changed/deleted/unmapped fields, counts,
+   reference checks, privacy-impact warnings and a strict mode that blocks loss.
+   Keep the existing filter interface compatible; add a result/reporting layer.
+4. A callable conversion/preflight service and CLI adapter without HTTP globals,
+   with an integration suite that tests import, editing, re-export and rollback.
+5. Bounded memory/progress for large files once benchmarks identify bottlenecks.
+
+Keep SCHUIT's Dutch WordPress UI, uploader permissions, confirmation, retained
+originals, job scheduling, backups and rollback in our integration. Invoke the
+PHP service from the existing worker; the remote URL-key endpoint is unnecessary
+for this local workflow. Native Aldfaer export belongs in a separate adapter,
+only after reliable extraction is established. Media upload stays out of scope.
+
+No code has been submitted to or messages sent to the maintainer. Initial upstream
+contributions should be small, independently reproducible fixes with synthetic
+fixtures, followed by agreement on the larger diagnostic/service interfaces.
