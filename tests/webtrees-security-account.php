@@ -3,7 +3,7 @@ declare(strict_types=1);
 // Test-only CLI helper. Create/remove only a random reserved-prefix account.
 if (PHP_SAPI !== 'cli') { exit(1); }
 define('SCHUIT_GEDCOM_TEST_LIBRARY', true);
-require dirname(__DIR__) . '/scripts/gedcom-worker.php';
+require '/opt/schuit-scripts/gedcom-worker.php';
 use Fisharebest\Webtrees\{DB, Registry};
 use Fisharebest\Webtrees\Contracts\UserInterface;
 use Fisharebest\Webtrees\Services\UserService;
