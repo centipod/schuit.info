@@ -13,6 +13,18 @@ function loginTarget(array $server, array $query): ?string {
     return preg_match('~^/(?:tree/)?(?:index\.php/)?login(?:/|$)~D', $route) ? 'webtrees' : null;
 }
 
+/** Load only the bounded, unexpired entries under the caller's exclusive lock. */
+function activeLimits($handle, int $now): array {
+    $raw = stream_get_contents($handle, 1048577);
+    if (strlen($raw) > 1048576) { throw new \RuntimeException('Invalid limiter storage'); }
+    $data = $raw === '' ? [] : json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
+    if (!is_array($data)) { throw new \RuntimeException('Invalid limiter storage'); }
+    foreach ($data as $id => $entry) {
+        if ($entry['until'] <= $now) { unset($data[$id]); }
+    }
+    return $data;
+}
+
 /** Atomic fixed-window limiter; bounded storage, no account names/passwords. */
 function attempt(string $file, string $ip, string $target, int $now): int {
     $address = inet_pton($ip);
@@ -22,13 +34,7 @@ function attempt(string $file, string $ip, string $target, int $now): int {
     if (!$handle || !flock($handle, LOCK_EX)) { throw new \RuntimeException('Limiter unavailable'); }
     try {
         chmod($file, 0600);
-        $raw = stream_get_contents($handle, 1048577);
-        if (strlen($raw) > 1048576) { throw new \RuntimeException('Invalid limiter storage'); }
-        $data = $raw === '' ? [] : json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
-        if (!is_array($data)) { throw new \RuntimeException('Invalid limiter storage'); }
-        foreach ($data as $id => $entry) {
-            if ($entry['until'] <= $now) { unset($data[$id]); }
-        }
+        $data = activeLimits($handle, $now);
         if (!isset($data[$key])) {
             if (count($data) >= 2048) { throw new \RuntimeException('Limiter capacity reached'); }
             $data[$key] = ['until' => $now + 600, 'count' => 0];

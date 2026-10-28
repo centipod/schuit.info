@@ -46,6 +46,33 @@ function imported(string $id, Tree $tree): bool {
     return DB::table('gedcom_setting')->where('gedcom_id', $tree->id())->where('setting_name','SCHUIT_IMPORT_JOB')->value('setting_value') === $id;
 }
 
+function requireTransactionalTables(): void {
+    $engines = DB::connection()->select('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = ?', ['BASE TABLE']);
+    foreach ($engines as $engine) {
+        if (strtoupper($engine->ENGINE) !== 'INNODB') { throw new RuntimeException('De database ondersteunt nog geen veilige transactionele import. Neem contact op met de beheerder.'); }
+    }
+}
+
+function importRecords(string $folder, Tree $tree, array &$job): int {
+    $service = Registry::container()->get(GedcomImportService::class);
+    $handle = fopen($folder . '/normalized.ged','rb'); $record = ''; $done = 0; $started = time();
+    $import = static function (string $record) use ($service, $tree, &$done, &$job, $started): void {
+        $service->importRecord(rtrim($record, "\n"), $tree, false); ++$done;
+        if ($done % 100 === 0) {
+            if (time() - $started > 1800) { throw new RuntimeException('De verwerking duurde te lang. De vorige gegevens blijven behouden. Neem contact op met de beheerder.'); }
+            $job['progress'] = $done . ' / ' . $job['analysis']['records'] . ' records verwerkt'; write($job);
+        }
+    };
+    try {
+        foreach (lines($handle) as $line) {
+            if (str_starts_with($line, '0 ') && $record !== '') { $import($record); $record = ''; }
+            $record .= $line . "\n";
+        }
+        if ($record !== '') { $import($record); }
+    } finally { fclose($handle); }
+    return $done;
+}
+
 function processImport(array &$job, Tree $tree): void {
     $folder = directory($job['id']);
     if (!hash_equals($job['normalized_sha256'], hash_file('sha256', $folder . '/normalized.ged')) ||
@@ -56,10 +83,7 @@ function processImport(array &$job, Tree $tree): void {
     $maintenance = fopen(root() . '/webtrees.lock', 'c');
     if (!flock($maintenance, LOCK_EX | LOCK_NB)) { throw new RuntimeException('Webtrees is nog bezig. Upload opnieuw en probeer het later.'); }
     if (baseline($tree) !== $job['baseline']) { throw new RuntimeException('De gegevens in Webtrees zijn gewijzigd sinds de controle. Upload het bestand opnieuw om de nieuwe verschillen te beoordelen.'); }
-    $engines = DB::connection()->select('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = ?', ['BASE TABLE']);
-    foreach ($engines as $engine) {
-        if (strtoupper($engine->ENGINE) !== 'INNODB') { throw new RuntimeException('De database ondersteunt nog geen veilige transactionele import. Neem contact op met de beheerder.'); }
-    }
+    requireTransactionalTables();
     // Match the native webtrees CLI import, but keep the entire operation atomic,
     // include the last record, and record completion in the SAME transaction.
     DB::connection()->beginTransaction();
@@ -74,22 +98,7 @@ function processImport(array &$job, Tree $tree): void {
             'link'=>'l_file','media_file'=>'m_file','media'=>'m_file','gedcom_chunk'=>'gedcom_id'] as $table=>$column) {
             DB::table($table)->where($column,$tree->id())->delete();
         }
-        $service = Registry::container()->get(GedcomImportService::class);
-        $handle = fopen($folder . '/normalized.ged','rb'); $record = ''; $done = 0; $started = time();
-        $import = static function (string $record) use ($service, $tree, &$done, &$job, $started): void {
-            $service->importRecord(rtrim($record, "\n"), $tree, false); ++$done;
-            if ($done % 100 === 0) {
-                if (time() - $started > 1800) { throw new RuntimeException('De verwerking duurde te lang. De vorige gegevens blijven behouden. Neem contact op met de beheerder.'); }
-                $job['progress'] = $done . ' / ' . $job['analysis']['records'] . ' records verwerkt'; write($job);
-            }
-        };
-        try {
-            foreach (lines($handle) as $line) {
-                if (str_starts_with($line, '0 ') && $record !== '') { $import($record); $record = ''; }
-                $record .= $line . "\n";
-            }
-            if ($record !== '') { $import($record); }
-        } finally { fclose($handle); }
+        $done = importRecords($folder, $tree, $job);
         foreach (['INDI'=>['individuals','i_file'],'FAM'=>['families','f_file']] as $tag=>[$table,$key]) {
             if (DB::table($table)->where($key,$tree->id())->count() !== $job['analysis']['counts'][$tag]) {
                 throw new RuntimeException('De geïmporteerde aantallen komen niet overeen. De vorige gegevens blijven behouden.');
