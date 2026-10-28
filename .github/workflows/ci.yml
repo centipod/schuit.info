@@ -22,7 +22,7 @@ jobs:
       image_id: ${{ steps.image.outputs.id }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       - name: Build clean release image
         run: docker build --pull -f docker/release.Dockerfile --build-arg SOURCE_REVISION="$GITHUB_SHA" --build-arg CI_RUN_ID="$GITHUB_RUN_ID" -t schuit-ci:candidate .
       - name: Package exact candidate
