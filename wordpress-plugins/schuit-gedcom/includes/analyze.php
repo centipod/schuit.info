@@ -5,6 +5,7 @@ namespace Schuit\Gedcom;
 
 use Fisharebest\Webtrees\GedcomFilters\GedcomEncodingFilter;
 use Fisharebest\Webtrees\Registry;
+require_once __DIR__.'/privacy.php';
 
 /** Bounded streaming reader: supports LF, CRLF and legacy CR files. */
 function lines($stream): \Generator {
@@ -25,6 +26,7 @@ function lines($stream): \Generator {
 }
 
 function analyze(string $input, string $output, callable $progress): array {
+    $excluded = exclusions();
     $size = filesize($input);
     if ($size === false || $size < 20 || $size > MAX_BYTES) { throw new \RuntimeException('Gebruik een GEDCOM-bestand van maximaal 100 MB.'); }
     $src = fopen($input, 'rb');
@@ -38,7 +40,8 @@ function analyze(string $input, string $output, callable $progress): array {
     try {
         $detected = Registry::encodingFactory()->detect(fread($src,65536));
         if ($detected === null) { throw new \RuntimeException('De GEDCOM-header ontbreekt of is langer dan 64 KB.'); }
-        $detectedName = $detected::NAME;
+        $detectedName = constant(get_class($detected) . '::NAME');
+        if (!is_string($detectedName)) { throw new \RuntimeException('Onbekende tekencodering.'); }
         rewind($src);
         // webtrees 2.2.6's UTF-16 converter replaces valid Latin-1 accents.
         // iconv preserves them; leave UTF-8 untouched so invalid bytes are rejected.
@@ -64,12 +67,13 @@ function analyze(string $input, string $output, callable $progress): array {
             $previousLevel = $level;
             if ($level === 0) {
                 ++$records; $recordBytes = 0; $tag = $m[3];
-                if (in_array($tag, ['HEAD','TRLR'], true) && (($m[2] ?? '') !== '' || trim($value) !== '')) { throw new \RuntimeException('Ongeldige HEAD- of TRLR-regel.'); }
+                if (in_array($tag, ['HEAD','TRLR'], true) && ($m[2] !== '' || trim($value) !== '')) { throw new \RuntimeException('Ongeldige HEAD- of TRLR-regel.'); }
                 if ($tag === 'HEAD') { ++$head; }
                 elseif ($tag === 'TRLR') { ++$trailer; }
                 else {
-                    if (($m[2] ?? '') === '') { throw new \RuntimeException('Een record mist een identificatie op regel ' . $lineNumber . '.'); }
+                    if ($m[2] === '') { throw new \RuntimeException('Een record mist een identificatie op regel ' . $lineNumber . '.'); }
                     if (isset($ids[$m[2]])) { throw new \RuntimeException('Dubbele recordidentificatie op regel ' . $lineNumber . '.'); }
+                    assertNotExcluded($m[2], $excluded);
                     $ids[$m[2]] = true;
                     $counts[$tag] = ($counts[$tag] ?? 0) + 1;
                 }

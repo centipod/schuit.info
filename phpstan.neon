@@ -1,0 +1,17 @@
+parameters:
+    level: 5
+    phpVersion: 80336
+    paths:
+        - docker
+        - wordpress-mu-plugins
+        - wordpress-plugins
+        - wordpress-theme
+        - modules_v4
+        - scripts
+    scanFiles:
+        - ci/tools/vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+    bootstrapFiles:
+        - /var/www/html/tree/vendor/autoload.php
+        - /opt/schuit-security/vendor/autoload.php
+    tmpDir: /tmp/schuit-phpstan
+    reportUnmatchedIgnoredErrors: true

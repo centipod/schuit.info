@@ -91,3 +91,36 @@ Set environment secrets `SCHUIT_DEPLOY_KEY` and `SCHUIT_KNOWN_HOSTS` in
 replace the application. The app remains at its previous revision when the CVE
 gate blocks a candidate. Keep infrastructure deployment evidence in
 `centipod/hetzner-server`.
+
+## Quality remediation controls (28 October 2026)
+
+`Static quality` runs PHPStan level 5 against WordPress stubs and the actual webtrees/JWT
+runtime, and Ruff correctness checks. No PHPStan baseline or blanket suppression is used.
+All release jobs and the independent host gate must succeed. The policy still blocks
+MEDIUM/HIGH/CRITICAL/UNKNOWN vulnerabilities, including unfixed findings.
+
+Build and runtime APK versions are locked, including transitives. Refresh deliberately using
+`scripts/refresh-apk-locks.sh`; review the diff and pass the complete pipeline. Package
+availability is still dependent on upstream repositories: a removed version fails the build.
+This is version-locked input resolution, not a claim of bit-for-bit reproducible builds.
+
+Each release has a CycloneDX SBOM and image/source provenance. Main-branch candidate
+archives additionally receive GitHub build attestations. Host release and daily scan evidence
+is included in encrypted S3 snapshots retained 35 days, independently of GitHub artifacts.
+Daily GitHub dependency scans and weekly Dependabot PRs supplement a daily scan of the
+**exact running image and deployed source**. A failed, mismatched or >36-hour-old scan
+makes the named SCHUIT vulnerability status check fail and enters existing host alerting.
+Christian Schuit owns triage. Scans never deploy changes automatically.
+
+Run `bash ci/install-controls.sh` as root from the published source before the first release
+using these controls. It pauses only the SCHUIT queue timer, refuses to interrupt an active
+worker, installs the root-owned fixed-operation broker and an unprivileged queue worker,
+then resumes the timer. Enable `schuit-security.timer` after the matching app has deployed.
+The worker cannot run arbitrary privileged commands and has no Docker socket access.
+
+Backups retain the v1 authenticated format while encryption, decryption and S3 I/O stream
+in bounded chunks. Single backup objects are limited to 5 GiB and fail explicitly above that;
+implement multipart upload before approaching that limit. Restore authenticates the full
+archive before extraction, verifies files and SQL, and boots recovered WordPress/webtrees
+and the identity broker on an internal Docker network without public ports. Live Cognito
+CAPTCHA, email delivery and MFA acceptance remain separate authorised-user tests.

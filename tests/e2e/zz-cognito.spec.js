@@ -39,3 +39,9 @@ test('Cognito signs into existing webtrees administrator; logout works',async({p
  await provider(page,'tree');await page.goto('/');await start(page,'/tree/login/0');await page.goto('/tree/admin');await expect(page).toHaveURL(/\/tree\/admin$/);
  await page.getByRole('link',{name:/^(Sign out|Afmelden)$/}).click();await expect(page.getByRole('link',{name:/^(Sign in|Aanmelden)$/})).toBeVisible();
 });
+test('login initiation is bounded per browser with a Dutch retry response',async({request})=>{
+ for(let i=0;i<3;i++){const r=await request.get('/wp-login.php',{maxRedirects:0});expect(r.status()).toBe(303);}
+ const limited=await request.get('/wp-login.php',{maxRedirects:0});
+ expect(limited.status()).toBe(429);expect(limited.headers()['retry-after']).toBe('600');
+ expect(await limited.text()).toMatch(/aanmeld|probeer/i);
+});

@@ -16,3 +16,9 @@
 !scripts/**
 !logo.png
 !banner.png
+!deployment/auth-dependencies/
+!deployment/auth-dependencies/composer.json
+!deployment/auth-dependencies/composer.lock
+!deployment/apk/
+!deployment/apk/**
+!security.txt

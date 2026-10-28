@@ -185,10 +185,7 @@ function schuit_portal_category_url(string $slug, int $fallback_id): string {
     $category = get_category_by_slug($slug);
 
     if ($category instanceof WP_Term) {
-        $url = get_category_link($category);
-        if (!is_wp_error($url)) {
-            return $url;
-        }
+        return get_category_link($category);
     }
 
     return add_query_arg('cat', (string) $fallback_id, home_url('/'));

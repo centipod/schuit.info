@@ -1,0 +1,10 @@
+[Unit]
+Description=SCHUIT daily deployed-image and dependency CVE scan
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/apps/schuit/scripts/security-scan.py
+TimeoutStartSec=2700
+MemoryMax=2G
+CPUQuota=100%

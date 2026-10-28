@@ -22,3 +22,14 @@ rejects(fn()=>consume('webtrees',$state,$binding),'cross-application state');rej
 ok(consume('wordpress',$state,$binding)['app']==='wordpress','valid browser state');rejects(fn()=>consume('wordpress',$state,$binding),'state replay');rejects(fn()=>consume('wordpress','../../passwd',$binding),'state traversal');
 file_put_contents($path,json_encode(['app'=>'wordpress','binding'=>hash('sha256',$binding),'until'=>time()-1]));rejects(fn()=>consume('wordpress',$state,$binding),'expired state');unlink($path);
 ok(treeRoute(['REQUEST_URI'=>'/tree/index.php/login/0'],[])==='/login/0','path login');ok(treeRoute(['REQUEST_URI'=>'/tree/index.php?route=/login/0'],['route'=>'/login/0'])==='/login/0','query route login');
+// State budgets are applied before allocating and before redirecting to AWS.
+$budget = sys_get_temp_dir().'/schuit-budget-'.bin2hex(random_bytes(8));mkdir($budget,0700);
+try {
+    for($i=0;$i<20;$i++){file_put_contents($budget.'/'.$i.'.json',json_encode(['client'=>'one','browser'=>'browser-'.$i]));}
+    rejects(fn()=>Schuit\Cognito\checkStateBudget($budget,'one','new-browser',time()),'IP cannot consume global pool');
+    Schuit\Cognito\checkStateBudget($budget,'two','second-browser',time());ok(true,'another client retains capacity');
+    for($i=0;$i<3;$i++){file_put_contents($budget.'/b'.$i.'.json',json_encode(['client'=>'two','browser'=>'same-browser']));}
+    rejects(fn()=>Schuit\Cognito\checkStateBudget($budget,'two','same-browser',time()),'browser outstanding state bounded');
+    foreach(glob($budget.'/*.json') as $f){touch($f,time()-601);}
+    Schuit\Cognito\checkStateBudget($budget,'one','same-browser',time());ok(count(glob($budget.'/*.json'))===0,'expired slots reclaimed');
+} finally {foreach(glob($budget.'/*') as $f){unlink($f);}rmdir($budget);}

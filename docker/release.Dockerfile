@@ -1,7 +1,8 @@
 # Public, immutable inputs; no pre-existing Hetzner image or private files.
 FROM composer:2@sha256:b6dcd72ca98fa19d0e5b8476de179859704891fad06dd9e0b96833d4c430a5fc AS composer
 FROM php:8.3.36-fpm-alpine3.24@sha256:25e15cf35ed0f5b75d8cf14fc2c4ed7e0e6bee00d359e681b7fa3e91a7bee49f AS build
-RUN apk upgrade --no-cache && apk add --no-cache $PHPIZE_DEPS freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev libzip-dev icu-dev unzip git \
+COPY deployment/apk/build.lock /tmp/apk.lock
+RUN apk add --no-cache $(cat /tmp/apk.lock) \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j2 gd intl mysqli pdo_mysql zip bcmath exif
 RUN mkdir -p /build && cd /build \
@@ -21,8 +22,8 @@ COPY deployment/webtrees-dependencies/composer.* /build/webtrees/
 RUN cd /build/webtrees && rm -rf vendor && composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-plugins --classmap-authoritative
 
 FROM php:8.3.36-fpm-alpine3.24@sha256:25e15cf35ed0f5b75d8cf14fc2c4ed7e0e6bee00d359e681b7fa3e91a7bee49f AS runtime
-RUN apk upgrade --no-cache \
-    && apk add --no-cache apache2 apache2-proxy freetype libjpeg-turbo libpng libwebp libzip icu-libs icu-data-full tini \
+COPY deployment/apk/runtime.lock /tmp/apk.lock
+RUN apk add --no-cache $(cat /tmp/apk.lock) \
     && rm -rf /usr/src/php* /usr/local/include/php
 COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
@@ -34,6 +35,7 @@ COPY --chown=33:33 wordpress-plugins/ /var/www/html/wp-content/plugins/
 COPY --chown=33:33 wordpress-mu-plugins/ /var/www/html/wp-content/mu-plugins/
 COPY --chown=33:33 modules_v4/ /var/www/html/tree/modules_v4/
 COPY logo.png banner.png /var/www/html/
+COPY security.txt /var/www/html/.well-known/security.txt
 COPY scripts/ /opt/schuit-scripts/
 COPY docker/login-throttle.php docker/runtime-guard.php docker/cognito*.php /opt/schuit-security/
 COPY --from=build /build/auth/vendor/ /opt/schuit-security/vendor/

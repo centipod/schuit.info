@@ -4,6 +4,6 @@ After=docker.service network-online.target
 [Service]
 Type=oneshot
 UMask=0077
-ExecStart=/usr/bin/python3 /opt/apps/schuit/scripts/backup-hetzner.py restore
+ExecStart=/opt/infra/schuit/backup-venv/bin/python3 /opt/apps/schuit/scripts/backup-hetzner.py restore
 MemoryMax=2G
 CPUQuota=100%

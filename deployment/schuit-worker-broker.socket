@@ -1,0 +1,12 @@
+[Unit]
+Description=SCHUIT fixed worker operations
+[Socket]
+ListenStream=/run/schuit-worker-broker.sock
+SocketMode=0660
+SocketUser=root
+SocketGroup=www-data
+Accept=yes
+MaxConnections=1
+RemoveOnStop=yes
+[Install]
+WantedBy=sockets.target

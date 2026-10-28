@@ -12,7 +12,7 @@ require_once $plugin . '/includes/jobs.php';
 require_once $plugin . '/includes/analyze.php';
 // Deployment mounts the complete plugin separately; scripts can also run in a checkout.
 chdir('/var/www/html/tree');
-require 'vendor/autoload.php';
+require '/var/www/html/tree/vendor/autoload.php';
 Webtrees::new()->bootstrap();
 I18N::init('en-US', true);
 $c = parse_ini_file(getenv('WEBTREES_CONFIG_PATH') ?: 'data/config.ini.php', false, INI_SCANNER_RAW);
@@ -52,10 +52,11 @@ function processImport(array &$job, Tree $tree): void {
         !hash_equals($job['analysis']['sha256'], hash_file('sha256', $folder . '/original.ged'))) {
         throw new RuntimeException('Het bestand is gewijzigd sinds de controle. Upload het opnieuw.');
     }
+    \Schuit\Gedcom\verifyPrivacyFile($folder . '/normalized.ged');
     $maintenance = fopen(root() . '/webtrees.lock', 'c');
     if (!flock($maintenance, LOCK_EX | LOCK_NB)) { throw new RuntimeException('Webtrees is nog bezig. Upload opnieuw en probeer het later.'); }
     if (baseline($tree) !== $job['baseline']) { throw new RuntimeException('De gegevens in Webtrees zijn gewijzigd sinds de controle. Upload het bestand opnieuw om de nieuwe verschillen te beoordelen.'); }
-    $engines = DB::select('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = ?', ['BASE TABLE']);
+    $engines = DB::connection()->select('SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = ?', ['BASE TABLE']);
     foreach ($engines as $engine) {
         if (strtoupper($engine->ENGINE) !== 'INNODB') { throw new RuntimeException('De database ondersteunt nog geen veilige transactionele import. Neem contact op met de beheerder.'); }
     }
