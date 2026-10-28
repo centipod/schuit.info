@@ -41,3 +41,13 @@ Official references: [Cognito WAF](https://docs.aws.amazon.com/cognito/latest/de
 ## Runtime remediation for deployment
 
 The Debian 13 candidate had 183 blocking OS-package findings with no fixed package versions in its release. The replacement uses digest-pinned official PHP 8.3.36 FPM on Alpine 3.24, updates repository packages at build time and runs minimal Apache + FPM as uid 33 under tini. Application versions, native permissions, isolation and MEDIUM+ gate are unchanged. Both daemons are supervised; the health check verifies Apache, FPM, both databases and the private Cognito broker. Local complete-image scan returned zero blocking findings; the exact amd64 GitHub candidate must independently pass the same gate before deployment.
+
+## Public-domain cutover — 28 October 2026
+
+The owner approved schuit.info as the canonical origin, with www.schuit.info
+redirecting to it. The preview redirects to the public site after activation.
+Managed login moves to login.schuit.info using the existing pool and accounts.
+Both preview and public callbacks remain allowed for rollback. The runtime
+installer accepts only the two explicitly approved origins; arbitrary origins
+remain rejected. Infrastructure and the reversible runtime cutover procedure
+are maintained in centipod/hetzner-server.

@@ -15,7 +15,7 @@ if len(raw) > 1048576:
 d = json.loads(raw)
 if not isinstance(d.get("enabled"), bool) or not isinstance(d.get("users"), dict):
     raise SystemExit("Invalid configuration")
-if d.get("origin") != "https://schuit.centipod.ai":
+if d.get("origin") not in {"https://schuit.centipod.ai", "https://schuit.info"}:
     raise SystemExit("Unexpected site origin")
 p = Path("/etc/centipod/schuit/cognito.json")
 p.parent.mkdir(parents=True, exist_ok=True)
