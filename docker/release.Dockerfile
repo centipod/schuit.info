@@ -1,6 +1,6 @@
 # Public, immutable inputs; no pre-existing Hetzner image or private files.
 FROM composer:2@sha256:b6dcd72ca98fa19d0e5b8476de179859704891fad06dd9e0b96833d4c430a5fc AS composer
-FROM php:8.3.36-fpm-alpine3.24@sha256:25e15cf35ed0f5b75d8cf14fc2c4ed7e0e6bee00d359e681b7fa3e91a7bee49f AS build
+FROM php:8.5.12-fpm-alpine3.24@sha256:4c2818074ec49f6abe46620f3965e0cb75bc3a5f2b417edd1aacaba6f091c40e AS build
 COPY deployment/apk/build.lock /tmp/apk.lock
 RUN apk add --no-cache $(cat /tmp/apk.lock) \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
@@ -21,7 +21,7 @@ RUN cd /build/auth && composer install --no-dev --no-interaction --prefer-dist -
 COPY deployment/webtrees-dependencies/composer.* /build/webtrees/
 RUN cd /build/webtrees && rm -rf vendor && composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-plugins --classmap-authoritative
 
-FROM php:8.3.36-fpm-alpine3.24@sha256:25e15cf35ed0f5b75d8cf14fc2c4ed7e0e6bee00d359e681b7fa3e91a7bee49f AS runtime
+FROM php:8.5.12-fpm-alpine3.24@sha256:4c2818074ec49f6abe46620f3965e0cb75bc3a5f2b417edd1aacaba6f091c40e AS runtime
 COPY deployment/apk/runtime.lock /tmp/apk.lock
 RUN apk add --no-cache $(cat /tmp/apk.lock) \
     && rm -rf /usr/src/php* /usr/local/include/php
