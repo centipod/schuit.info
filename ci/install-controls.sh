@@ -3,6 +3,7 @@
 set -euo pipefail
 test "$(id -u)" = 0
 source_dir="$(cd "$(dirname "$0")/.." && pwd)"
+install -d -m 755 -o root -g root /opt/infra/schuit
 # Dedicated, hash-locked runtime; do not change packages used by other hosted services.
 python3 -m venv /opt/infra/schuit/backup-venv
 /opt/infra/schuit/backup-venv/bin/pip install --require-hashes --only-binary=:all: -r "$source_dir/deployment/backup-requirements.txt"

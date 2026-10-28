@@ -167,6 +167,7 @@ def activate(release, revision, image_id, run_id):
             raise ValueError("GEDCOM maintenance is active")
         for job in (BASE / "gedcom-jobs").glob("*/status.json"):
             if read_job(BASE / "gedcom-jobs", job.parent.name)["state"] in {
+                "uploaded",
                 "queued",
                 "backing_up",
                 "importing",

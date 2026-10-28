@@ -124,3 +124,9 @@ implement multipart upload before approaching that limit. Restore authenticates 
 archive before extraction, verifies files and SQL, and boots recovered WordPress/webtrees
 and the identity broker on an internal Docker network without public ports. Live Cognito
 CAPTCHA, email delivery and MFA acceptance remain separate authorised-user tests.
+
+The SCHUIT backup/restore units and fixed worker broker use a dedicated
+`/opt/infra/schuit/backup-venv` installed with `--require-hashes --only-binary=:all:`
+from `deployment/backup-requirements.txt`. This keeps cryptography patched without
+changing the Python dependencies of other hosted services. Review dependency PRs and
+re-run `ci/install-controls.sh` when that lock changes; daily source scans include it.

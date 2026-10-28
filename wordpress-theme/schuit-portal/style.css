@@ -52,7 +52,7 @@ h3 {
 }
 
 a {
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
   text-decoration-thickness: 2px;
   text-underline-offset: 0.15em;
 }
@@ -148,7 +148,7 @@ a:focus-visible,
 .site-nav a:hover,
 .site-nav a:focus-visible {
   background: rgba(23, 20, 17, 0.05);
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
 }
 
 .hero {
@@ -407,7 +407,7 @@ a:focus-visible,
 }
 
 .section-heading__eyebrow {
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
   background: rgba(18, 63, 58, 0.08);
   border-color: rgba(18, 63, 58, 0.14);
 }
@@ -683,6 +683,7 @@ a:focus-visible,
   --schuit-muted: #596275;
   --schuit-accent: #14253d;
   --schuit-accent-2: #b48442;
+  --schuit-accent-text: #805a28;
   --schuit-accent-3: #d4c2a0;
   --schuit-border: rgba(20, 37, 61, 0.12);
   --schuit-border-strong: rgba(20, 37, 61, 0.18);
@@ -715,7 +716,7 @@ a {
 }
 
 a:hover {
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
 }
 
 .schuit-shell,
@@ -945,7 +946,7 @@ a:hover {
 .news-card__eyebrow,
 .story-card__eyebrow {
   margin: 0;
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -1034,7 +1035,7 @@ a:hover {
 .home-hero__badge-label {
   display: inline-flex;
   margin-bottom: 0.5rem;
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.15em;
@@ -1090,7 +1091,7 @@ a:hover {
 
 .section-head__link:hover,
 .section-head__link:focus-visible {
-  color: var(--schuit-accent-2);
+  color: var(--schuit-accent-text, var(--schuit-accent-2));
 }
 
 .news-grid,
