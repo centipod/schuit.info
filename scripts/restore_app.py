@@ -174,15 +174,28 @@ def verify(folder: Path, manifest: dict, database: str) -> dict:
 $c = json_decode(file_get_contents('/run/secrets/schuit-cognito.json'), true);
 $origin = parse_url($c['origin'], PHP_URL_HOST);
 $statuses = [];
+$portalCookie = '';
 foreach (['/', '/tree/', '/tree/tree/0', '/wp-login.php'] as $path) {
+    $headers = ['Host: '.$origin, 'X-Forwarded-Proto: https',
+        'User-Agent: SCHUIT-Recovery-Verification/1.0', 'Accept: text/html'];
+    if ($portalCookie !== '' && str_starts_with($path, '/tree/')) {
+        $headers[] = 'Cookie: '.$portalCookie;
+    }
     $ctx = stream_context_create(['http'=>[
         'timeout'=>15, 'follow_location'=>0, 'ignore_errors'=>true,
-        'header'=>'Host: '.$origin."\r\nX-Forwarded-Proto: https\r\n"
+        'header'=>implode("\r\n", $headers)."\r\n"
     ]]);
     $http_response_header = [];
     @file_get_contents('http://127.0.0.1:8080'.$path, false, $ctx);
     preg_match('/^HTTP\/[^ ]+ ([0-9]{3})/', $http_response_header[0] ?? '', $matches);
     $statuses[$path] = (int) ($matches[1] ?? 0);
+    if ($path === '/') {
+        foreach ($http_response_header as $header) {
+            if (preg_match('/^Set-Cookie: (schuit_webtrees_visit=[^;]+)/i', $header, $cookie)) {
+                $portalCookie = $cookie[1];
+            }
+        }
+    }
 }
 echo json_encode($statuses);
 """
