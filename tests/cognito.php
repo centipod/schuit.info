@@ -33,3 +33,9 @@ try {
     foreach(glob($budget.'/*.json') as $f){touch($f,time()-601);}
     Schuit\Cognito\checkStateBudget($budget,'one','same-browser',time());ok(count(glob($budget.'/*.json'))===0,'expired slots reclaimed');
 } finally {foreach(glob($budget.'/*') as $f){unlink($f);}rmdir($budget);}
+
+ok(Schuit\Cognito\allowedLoginDomain('https://login.schuit.info'), 'approved custom login domain');
+ok(Schuit\Cognito\allowedLoginDomain('https://schuit-review-526247032691.auth.eu-west-1.amazoncognito.com'), 'prefix domain rollback');
+foreach (['http://login.schuit.info', 'https://login.schuit.info.attacker.invalid', 'https://login.schuit.info@attacker.invalid', 'https://login.schuit.info:443', 'https://login.schuit.info/path', 'https://other.schuit.info'] as $domain) {
+    ok(!Schuit\Cognito\allowedLoginDomain($domain), 'reject unapproved login endpoint '.$domain);
+}

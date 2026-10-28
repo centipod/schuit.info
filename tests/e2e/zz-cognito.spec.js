@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');const {execFileSync}=require('node:child_process');
 const configPath='.ci/auth/schuit-cognito.json';
-const cfg={enabled:true,origin:'https://localhost:19443',domain:'https://schuit-fixture.auth.eu-west-1.amazoncognito.com',issuer:'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_test',client_id:'syntheticclient123456',users:{}};
+const cfg={enabled:true,origin:'https://localhost:19443',domain:'https://login.schuit.info',issuer:'https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_test',client_id:'syntheticclient123456',users:{}};
 const admin='/wp-admin/tools.php?page=schuit-gedcom-import';
 test.describe.configure({mode:'serial'});
 test.beforeAll(()=>{

@@ -5,6 +5,10 @@ namespace Schuit\Cognito;
 final class LoginCapacity extends \RuntimeException {}
 
 const CONFIG = '/run/secrets/schuit-cognito.json';
+function allowedLoginDomain(string $domain): bool {
+    return $domain === 'https://login.schuit.info' ||
+        preg_match('~^https://[a-z0-9-]+\.auth\.eu-west-1\.amazoncognito\.com$~D', $domain) === 1;
+}
 function config(): array {
     static $config;
     if ($config !== null) { return $config; }
@@ -16,7 +20,7 @@ function config(): array {
         if (!is_string($config[$key] ?? null)) { throw new \RuntimeException('Missing auth configuration'); }
     }
     if (!preg_match('~^https://[a-z0-9.-]+(?::[0-9]+)?$~D', $config['origin']) ||
-        !preg_match('~^https://[a-z0-9-]+\.auth\.eu-west-1\.amazoncognito\.com$~D', $config['domain']) ||
+        !allowedLoginDomain($config['domain']) ||
         !preg_match('~^https://cognito-idp\.eu-west-1\.amazonaws\.com/eu-west-1_[A-Za-z0-9]+$~D', $config['issuer']) ||
         !preg_match('/^[a-z0-9]{10,128}$/D', $config['client_id'])) { throw new \RuntimeException('Invalid auth endpoints'); }
     return $config;
