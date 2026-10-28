@@ -33,7 +33,7 @@ jobs:
           docker save schuit-ci:candidate | gzip -1 > .ci/candidate.tar.gz
       - name: Attest exact candidate archive
         if: github.ref == 'refs/heads/main'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:
           subject-path: .ci/candidate.tar.gz
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
