@@ -170,9 +170,27 @@ def verify(folder: Path, manifest: dict, database: str) -> dict:
                 time.sleep(1)
         else:
             raise RuntimeError("Restored application is not healthy")
-        probe = """$c=json_decode(file_get_contents('/run/secrets/schuit-cognito.json'),true);$origin=parse_url($c['origin'],PHP_URL_HOST);foreach(['/'=>200,'/tree/'=>302,'/tree/tree/0'=>200,'/wp-login.php'=>303] as $path=>$status){$ctx=stream_context_create(['http'=>['timeout'=>15,'follow_location'=>0,'ignore_errors'=>true,'header'=>'Host: '.$origin."\\r\\nX-Forwarded-Proto: https\\r\\n"]]);file_get_contents('http://127.0.0.1:8080'.$path,false,$ctx);if(!str_contains($http_response_header[0],' '.$status.' ')){throw new RuntimeException('Restored HTTP route failed');}}echo 'ok';"""
-        if run(["exec", web, "php", "-r", probe]) != b"ok":
-            raise RuntimeError("Restored HTTP routes failed")
+        probe = r"""
+$c = json_decode(file_get_contents('/run/secrets/schuit-cognito.json'), true);
+$origin = parse_url($c['origin'], PHP_URL_HOST);
+$statuses = [];
+foreach (['/', '/tree/', '/tree/tree/0', '/wp-login.php'] as $path) {
+    $ctx = stream_context_create(['http'=>[
+        'timeout'=>15, 'follow_location'=>0, 'ignore_errors'=>true,
+        'header'=>'Host: '.$origin."\r\nX-Forwarded-Proto: https\r\n"
+    ]]);
+    $http_response_header = [];
+    @file_get_contents('http://127.0.0.1:8080'.$path, false, $ctx);
+    preg_match('/^HTTP\/[^ ]+ ([0-9]{3})/', $http_response_header[0] ?? '', $matches);
+    $statuses[$path] = (int) ($matches[1] ?? 0);
+}
+echo json_encode($statuses);
+"""
+        statuses = json.loads(run(["exec", web, "php", "-r", probe]))
+        expected = {"/": 200, "/tree/": 302, "/tree/tree/0": 200, "/wp-login.php": 303}
+        if statuses != expected:
+            # Fixed public route names and numeric status only; no private response bodies.
+            raise RuntimeError("Restored HTTP status check failed: " + json.dumps(statuses))
         return {
             "booted": True,
             "private_network": True,
