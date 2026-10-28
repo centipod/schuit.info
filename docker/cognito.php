@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace Schuit\Cognito;
 
+final class LoginCapacity extends \RuntimeException {}
+
 const CONFIG = '/run/secrets/schuit-cognito.json';
 function config(): array {
     static $config;
@@ -41,25 +43,54 @@ function cookieName(string $app): string { return '__Host-schuit-oidc-' . $app; 
 function cookie(string $app, string $value, int $expires): void {
     setcookie(cookieName($app), $value, ['expires'=>$expires, 'path'=>'/', 'secure'=>true, 'httponly'=>true, 'samesite'=>'Lax']);
 }
+/** Called under the allocation lock; limits one IP and browser before AWS redirect. */
+function checkStateBudget(string $dir, string $client, string $browser, int $now): void {
+    $total = 0; $perClient = 0; $perBrowser = 0;
+    foreach (glob($dir . '/*.json') ?: [] as $file) {
+        if (is_link($file)) { throw new \RuntimeException('Invalid state file'); }
+        if (filemtime($file) < $now - 600) { unlink($file); continue; }
+        $raw = file_get_contents($file, false, null, 0, 4097);
+        if ($raw === false || strlen($raw) > 4096) { throw new \RuntimeException('Invalid state data'); }
+        $state = json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
+        ++$total;
+        if (($state['client'] ?? '') === $client) { ++$perClient; }
+        if (($state['browser'] ?? '') === $browser) { ++$perBrowser; }
+    }
+    if ($total >= 512 || $perClient >= 20 || $perBrowser >= 3) {
+        throw new LoginCapacity('Login initiation limit reached');
+    }
+}
 function authorizationUrl(string $app): string {
     $cfg = config(); $dir = stateDirectory();
-    $files = glob($dir . '/*.json');
-    foreach ($files as $file) { if (filemtime($file) < time() - 600) { @unlink($file); } }
-    if (count(glob($dir . '/*.json')) >= 512) { throw new \RuntimeException('State capacity reached'); }
-    $state = b64(random_bytes(32)); $binding = b64(random_bytes(32));
-    $data = ['app'=>$app, 'binding'=>hash('sha256', $binding), 'nonce'=>b64(random_bytes(32)), 'verifier'=>b64(random_bytes(48)), 'until'=>time()+600];
-    $file = $dir . '/' . hash('sha256', $state) . '.json';
-    $f = fopen($file, 'x');
-    if (!$f) { throw new \RuntimeException('Cannot create state'); }
-    try { chmod($file, 0600); $json=json_encode($data, JSON_THROW_ON_ERROR); if (fwrite($f,$json)!==strlen($json) || !fflush($f)) { throw new \RuntimeException('Cannot save state'); } } finally { fclose($f); }
+    // REMOTE_ADDR is normalised by trusted Apache mod_remoteip, not request headers.
+    $ip = inet_pton($_SERVER['REMOTE_ADDR'] ?? '');
+    if ($ip === false) { throw new \RuntimeException('Invalid client address'); }
+    $client = hash('sha256', $ip);
+    $binding = $_COOKIE[cookieName($app)] ?? '';
+    if (!is_string($binding) || !preg_match('/^[A-Za-z0-9_-]{43}$/D', $binding)) { $binding = b64(random_bytes(32)); }
+    $browser = hash('sha256', $binding);
+    $lock = fopen($dir . '/allocation.lock', 'c');
+    if (!$lock || !flock($lock, LOCK_EX)) { throw new \RuntimeException('State lock unavailable'); }
+    try {
+        checkStateBudget($dir, $client, $browser, time());
+        $state = b64(random_bytes(32));
+        $data = ['app'=>$app, 'client'=>$client, 'browser'=>$browser, 'binding'=>$browser, 'nonce'=>b64(random_bytes(32)), 'verifier'=>b64(random_bytes(48)), 'until'=>time()+600];
+        $file = $dir . '/' . hash('sha256', $state) . '.json';
+        $f = fopen($file, 'x');
+        if (!$f) { throw new \RuntimeException('Cannot create state'); }
+        try { chmod($file, 0600); $json=json_encode($data, JSON_THROW_ON_ERROR); if (fwrite($f,$json)!==strlen($json) || !fflush($f)) { throw new \RuntimeException('Cannot save state'); } } finally { fclose($f); }
+    } finally { flock($lock, LOCK_UN); fclose($lock); }
     cookie($app, $binding, time()+600);
     return $cfg['domain'].'/oauth2/authorize?'.http_build_query([
         'response_type'=>'code', 'client_id'=>$cfg['client_id'], 'redirect_uri'=>callback($app),
         'scope'=>'openid email', 'state'=>$state, 'nonce'=>$data['nonce'], 'code_challenge_method'=>'S256',
-        'code_challenge'=>b64(hash('sha256',$data['verifier'],true)), 'lang'=>'nl',
-        // Always require interactive sign-in. Local logout must not silently reauthenticate.
-        'prompt'=>'login',
+        'code_challenge'=>b64(hash('sha256',$data['verifier'],true)), 'lang'=>'nl', 'prompt'=>'login',
     ], '', '&', PHP_QUERY_RFC3986);
+}
+function limited(): never {
+    http_response_code(429); header('Retry-After: 600'); header('Cache-Control: no-store');
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><html lang="nl"><meta charset="utf-8"><title>Aanmelden — SCHUIT</title><h1>Even wachten met aanmelden</h1><p>Er zijn te veel aanmeldpogingen. Rond een bestaande aanmelding af of probeer het over tien minuten opnieuw.</p><a href="/">Terug naar de website</a></html>'; exit;
 }
 function consume(string $app, mixed $state, mixed $binding): array {
     if (!is_string($state) || !preg_match('/^[A-Za-z0-9_-]{43}$/D',$state) || !is_string($binding) || !preg_match('/^[A-Za-z0-9_-]{43}$/D',$binding)) { throw new \RuntimeException('Invalid state'); }

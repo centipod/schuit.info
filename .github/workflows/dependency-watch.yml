@@ -1,0 +1,29 @@
+name: Scheduled dependency security
+on:
+  schedule: [{cron: '30 3 * * *'}]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: |
+          mkdir -p .ci/scans
+          docker run --rm -v "$PWD:/src:ro" -v "$PWD/.ci/scans:/reports" aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f fs --config /dev/null --scanners vuln --ignorefile /dev/null --ignore-unfixed=false --include-dev-deps --format json --output /reports/dependencies.json /src
+          python3 - <<'PY'
+          import json,sys
+          sys.path.insert(0,'ci')
+          from security_policy import inspect_report
+          findings=inspect_report(json.load(open('.ci/scans/dependencies.json')),'dependencies')
+          print('Blocking dependency findings:',len(findings))
+          sys.exit(bool(findings))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: daily-dependency-security
+          path: .ci/scans
+          include-hidden-files: true
+          retention-days: 90

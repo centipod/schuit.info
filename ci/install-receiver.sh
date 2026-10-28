@@ -10,6 +10,7 @@ if ! id schuit-deploy >/dev/null 2>&1; then
   useradd --system --create-home --home-dir /var/lib/schuit-deploy --shell /bin/sh schuit-deploy
 fi
 install -d -m 755 -o root -g root /opt/infra/schuit/deploy-gate
+install -m 644 "$source_dir/scripts/safe_queue.py" /opt/infra/schuit/deploy-gate/safe_queue.py
 install -m 644 "$source_dir/ci/deploy_policy.py" /opt/infra/schuit/deploy-gate/deploy_policy.py
 install -m 644 "$source_dir/ci/image_identity.py" /opt/infra/schuit/deploy-gate/image_identity.py
 install -m 755 "$source_dir/ci/receive-deploy.py" /opt/infra/schuit/deploy-gate/receive-deploy.py

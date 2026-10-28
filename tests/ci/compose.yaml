@@ -27,6 +27,7 @@ services:
       WEBTREES_METRICS_PATH: /run/schuit-metrics/metrics.json
       WEBTREES_CONFIG_PATH: /var/www/html/tree/data/config.ini.php
     volumes:
+      - ../../tests/ci/privacy:/run/schuit-privacy:ro
       - ../../.ci/auth:/run/secrets:ro
       - site:/var/www/html
       - jobs:/var/lib/schuit-gedcom

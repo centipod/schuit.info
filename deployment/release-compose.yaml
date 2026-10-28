@@ -22,6 +22,7 @@ services:
       SCHUIT_GEDCOM_JOBS: /var/lib/schuit-gedcom
       SCHUIT_GEDCOM_TREE_ID: '7'
     volumes:
+      - /srv/schuit/privacy-controls:/run/schuit-privacy:ro
       - /srv/schuit/wordpress/wp-content/languages:/var/www/html/wp-content/languages:ro
       - /srv/schuit/uploads:/var/www/html/wp-content/uploads:rw
       - /srv/schuit/webtrees-data:/var/www/html/tree/data:rw

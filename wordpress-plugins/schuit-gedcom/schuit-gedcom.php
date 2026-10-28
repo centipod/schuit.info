@@ -110,6 +110,26 @@ function form(string $operation, string $id = ''): void {
     wp_nonce_field('schuit_gedcom');
     echo '<input type="hidden" name="action" value="schuit_gedcom"><input type="hidden" name="operation" value="' . esc_attr($operation) . '"><input type="hidden" name="job" value="' . esc_attr($id) . '">';
 }
+function analysisDetails(array $job): void {
+    $a = $job['analysis']; $current = $job['baseline']['counts'];
+    echo '<div class="sg-metrics">';
+    foreach (['INDI'=>'Personen', 'FAM'=>'Gezinnen', 'SOUR'=>'Bronnen', 'OBJE'=>'Mediarecords'] as $key=>$label) {
+        echo '<div><span>' . esc_html($label) . '</span><strong>' . esc_html(number_format_i18n($a['counts'][$key])) . '</strong>';
+        if (isset($current[$key])) {
+            $delta = $a['counts'][$key] - $current[$key];
+            echo '<small>Nu: ' . esc_html(number_format_i18n($current[$key])) . ' · Verschil: ' . ($delta > 0 ? '+' : '') . esc_html(number_format_i18n($delta)) . '</small>';
+        }
+        echo '</div>';
+    }
+    echo '</div><dl class="sg-details">';
+    foreach (['Doelbestand in Webtrees'=>$job['baseline']['title'], 'Bestandsgrootte'=>size_format($a['bytes'], 2), 'GEDCOM-versie'=>$a['version'],
+        'Tekencodering'=>$a['encoding'] . ' → UTF-8', 'Records'=>number_format_i18n($a['records']), 'Aangepaste naamregels'=>number_format_i18n($a['normalized_names']), 'SHA-256'=>$a['sha256']] as $label=>$value) {
+        echo '<dt>' . esc_html($label) . '</dt><dd>' . esc_html((string)$value) . '</dd>';
+    }
+    echo '</dl><p>Het origineel blijft privé bewaard. Alleen naamregels krijgen waar nodig een spatie vóór “/”. Links en bestandspaden blijven ongewijzigd. Mediarecords bevatten verwijzingen; foto’s en documenten worden niet met een GEDCOM-bestand meegeleverd.</p>';
+    foreach ($a['warnings'] as $warning) { echo '<div class="notice notice-warning inline"><p>' . esc_html($warning) . '</p></div>'; }
+}
+
 function page(): void {
     access();
     echo '<div class="wrap schuit-gedcom"><p class="sg-eyebrow">SCHUIT · WEBTREES</p><h1>GEDCOM-beheer</h1><p>Uploaden → Controleren → Bevestigen → Verwerken</p>';
@@ -118,25 +138,7 @@ function page(): void {
         try { $job = owned($id); } catch (\Throwable) { echo '<p>Taak niet beschikbaar.</p></div>'; return; }
         echo '<p><a href="' . esc_url(url()) . '">← Alle uploads</a></p><section class="sg-panel" data-job="' . esc_attr($id) . '" data-state="' . esc_attr($job['state']) . '"><h2>' . esc_html($job['filename']) . '</h2><p><strong id="sg-state" role="status">' . esc_html(labels()[$job['state']]) . '</strong></p><p id="sg-progress" aria-live="polite">' . esc_html((string)($job['progress'] ?? '')) . '</p><p id="sg-connection"></p>';
         if (isset($job['error'])) { echo '<div class="notice notice-error inline"><p>' . esc_html($job['error']) . '</p></div>'; }
-        if (isset($job['analysis'])) {
-            $a = $job['analysis']; $current = $job['baseline']['counts'];
-            echo '<div class="sg-metrics">';
-            foreach (['INDI'=>'Personen', 'FAM'=>'Gezinnen', 'SOUR'=>'Bronnen', 'OBJE'=>'Mediarecords'] as $key=>$label) {
-                echo '<div><span>' . esc_html($label) . '</span><strong>' . esc_html(number_format_i18n($a['counts'][$key])) . '</strong>';
-                if (isset($current[$key])) {
-                    $delta = $a['counts'][$key] - $current[$key];
-                    echo '<small>Nu: ' . esc_html(number_format_i18n($current[$key])) . ' · Verschil: ' . ($delta > 0 ? '+' : '') . esc_html(number_format_i18n($delta)) . '</small>';
-                }
-                echo '</div>';
-            }
-            echo '</div><dl class="sg-details">';
-            foreach (['Doelbestand in Webtrees'=>$job['baseline']['title'], 'Bestandsgrootte'=>size_format($a['bytes'], 2), 'GEDCOM-versie'=>$a['version'],
-                'Tekencodering'=>$a['encoding'] . ' → UTF-8', 'Records'=>number_format_i18n($a['records']), 'Aangepaste naamregels'=>number_format_i18n($a['normalized_names']), 'SHA-256'=>$a['sha256']] as $label=>$value) {
-                echo '<dt>' . esc_html($label) . '</dt><dd>' . esc_html((string)$value) . '</dd>';
-            }
-            echo '</dl><p>Het origineel blijft privé bewaard. Alleen naamregels krijgen waar nodig een spatie vóór “/”. Links en bestandspaden blijven ongewijzigd. Mediarecords bevatten verwijzingen; foto’s en documenten worden niet met een GEDCOM-bestand meegeleverd.</p>';
-            foreach ($a['warnings'] as $warning) { echo '<div class="notice notice-warning inline"><p>' . esc_html($warning) . '</p></div>'; }
-        }
+        if (isset($job['analysis'])) { analysisDetails($job); }
         if ($job['state'] === 'ready') {
             echo '<h3>Controleer en bevestig</h3><p>De import vervangt de genealogische records in het hierboven genoemde bestand. Accounts, toegangsrechten, privacyinstellingen en bestaande mediabestanden blijven behouden. Eerst wordt een versleutelde back-up gemaakt. Webtrees is tijdens de verwerking tijdelijk niet beschikbaar; deze statuspagina blijft werken.</p>';
             form('confirm', $id);

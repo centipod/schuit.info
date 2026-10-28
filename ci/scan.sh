@@ -11,3 +11,11 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro -v "$PWD/.ci/sca
 docker run --rm -v "$PWD:/src:ro" -v "$PWD/.ci/scans:/reports" -v "$PWD/.ci/trivy-cache:/root/.cache/trivy" "$scanner" fs "${common[@]}" --include-dev-deps --pkg-types library --skip-dirs /src/.git,/src/.ci,/src/working,/src/node_modules --output /reports/dependencies.json /src
 image_id="$(docker image inspect --format '{{.Id}}' "$image")"
 python3 "$policy_dir/security_policy.py" --image-report .ci/scans/image.json --dependency-report .ci/scans/dependencies.json --revision "$revision" --image-id "$image_id" --output .ci/scans/eligibility.json
+
+# Standard software inventory for this exact image, retained with scan evidence.
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock:ro -v "$PWD/.ci/scans:/reports" -v "$PWD/.ci/trivy-cache:/root/.cache/trivy" "$scanner" image --config /dev/null --scanners vuln --format cyclonedx --output /reports/sbom.cdx.json "$image"
+python3 - "$revision" "$image_id" <<'PY2'
+import json,sys,datetime
+from pathlib import Path
+Path('.ci/scans/provenance.json').write_text(json.dumps({'source':'https://github.com/centipod/schuit.info','revision':sys.argv[1],'image_id':sys.argv[2],'created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'policy':'deny-medium-and-above-v1'},indent=2)+'\n')
+PY2

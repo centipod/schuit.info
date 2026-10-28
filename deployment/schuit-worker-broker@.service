@@ -1,0 +1,19 @@
+[Unit]
+Description=SCHUIT privileged fixed worker operation
+[Service]
+ExecStart=/usr/bin/python3 /opt/infra/schuit/worker-broker.py
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+User=root
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/srv/schuit /srv/schuit-backup-work
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+TimeoutStartSec=2300
+MemoryMax=2G
+CPUQuota=100%

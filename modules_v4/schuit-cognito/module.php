@@ -43,6 +43,8 @@ return new class() extends AbstractModule implements ModuleCustomInterface,Middl
                 return redirect(\Schuit\Cognito\authorizationUrl('webtrees'))->withHeader('Cache-Control','no-store')->withHeader('Referrer-Policy','no-referrer');
             }
             return $handler->handle($request);
+        }catch(\Schuit\Cognito\LoginCapacity $e){
+            return response('<h1>Even wachten met aanmelden</h1><p>Probeer het over tien minuten opnieuw.</p>',429)->withHeader('Retry-After','600')->withHeader('Cache-Control','no-store');
         }catch(Throwable $e){return $this->denied();}
     }
 };

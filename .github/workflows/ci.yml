@@ -14,6 +14,10 @@ jobs:
     name: Build candidate
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     outputs:
       image_id: ${{ steps.image.outputs.id }}
     steps:
@@ -27,6 +31,11 @@ jobs:
           mkdir -p .ci
           echo "id=$(docker image inspect --format '{{.Id}}' schuit-ci:candidate)" >> "$GITHUB_OUTPUT"
           docker save schuit-ci:candidate | gzip -1 > .ci/candidate.tar.gz
+      - name: Attest exact candidate archive
+        if: github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        with:
+          subject-path: .ci/candidate.tar.gz
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: candidate-image
@@ -46,7 +55,23 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with: {name: candidate-image, path: .ci}
       - run: gzip -dc .ci/candidate.tar.gz | docker load
+      - run: python3 -m pip install --require-hashes -r ci/requirements.txt
       - run: bash ci/unit.sh
+  quality:
+    name: Static quality
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SCHUIT_TEST_IMAGE: schuit-ci:candidate
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with: {name: candidate-image, path: .ci}
+      - run: gzip -dc .ci/candidate.tar.gz | docker load
+      - run: python3 -m pip install --require-hashes -r ci/requirements.txt
+      - run: docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/app" -w /app/ci/tools composer:2@sha256:b6dcd72ca98fa19d0e5b8476de179859704891fad06dd9e0b96833d4c430a5fc install --no-interaction --no-scripts --no-plugins --prefer-dist
+      - run: bash ci/quality.sh
   browser:
     name: Browser E2E
     needs: build
@@ -100,7 +125,7 @@ jobs:
   release-gate:
     name: Release gate
     if: always()
-    needs: [build, unit, browser, cve]
+    needs: [build, unit, browser, cve, quality]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every check to succeed; skipped is not success

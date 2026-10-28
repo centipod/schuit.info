@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: composer
+    directories: [/deployment/auth-dependencies, /deployment/webtrees-dependencies, /ci/tools]
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 3
+  - package-ecosystem: npm
+    directory: /
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 3
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: weekly}
+  - package-ecosystem: docker
+    directory: /docker
+    schedule: {interval: weekly}

@@ -9,6 +9,6 @@ foreach($p->query("SELECT chunk_data FROM {$prefix}gedcom_chunk WHERE imported=1
  $counts['individuals']+=preg_match_all('/(?:^|[\r\n])0 @[^@]+@ INDI(?:[\r\n]|$)/',$row['chunk_data']);
  $counts['families']+=preg_match_all('/(?:^|[\r\n])0 @[^@]+@ FAM(?:[\r\n]|$)/',$row['chunk_data']);
  $counts['chunks']++;
- if ($row['chunk_data'] !== null && $row['chunk_data'] !== '') { $counts['chunks_with_payload']++; }
+ if ($row['chunk_data'] !== '') { $counts['chunks_with_payload']++; }
 }
 echo json_encode(['retained_import_records'=>$counts['chunks_with_payload'] > 0 ? $counts : null, 'note'=>$counts['chunks_with_payload'] > 0 ? 'Retained imported records counted' : 'Completed import chunks no longer contain the uploaded GEDCOM; use a fresh export for file reconciliation','database'=>['individuals'=>(int)$p->query("SELECT COUNT(*) FROM {$prefix}individuals")->fetchColumn(),'families'=>(int)$p->query("SELECT COUNT(*) FROM {$prefix}families")->fetchColumn()]],JSON_PRETTY_PRINT)."\n";

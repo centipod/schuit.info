@@ -19,5 +19,5 @@ add_action('login_init',static function(): void {
         }
         if(($_SERVER['REQUEST_METHOD']??'')!=='GET'){\Schuit\Cognito\fail();}
         \Schuit\Cognito\begin('wordpress');
-    } catch(Throwable $e) {error_log('SCHUIT Cognito WordPress login rejected');\Schuit\Cognito\fail();}
+    } catch(\Schuit\Cognito\LoginCapacity $e) {\Schuit\Cognito\limited();} catch(Throwable $e) {error_log('SCHUIT Cognito WordPress login rejected');\Schuit\Cognito\fail();}
 });
