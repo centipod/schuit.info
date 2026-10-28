@@ -15,6 +15,13 @@ def run(args, **kwargs):
     return result.stdout
 
 
+def connect_database(network: str, database: str, aliases: list[str]) -> None:
+    # Docker's special `none` network must be detached before attaching another.
+    # The destination is already an internal network; no public bridge is used.
+    run(["network", "disconnect", "none", database])
+    run(["network", "connect", *[arg for a in aliases for arg in ["--alias", a]], network, database])
+
+
 def verify(folder: Path, manifest: dict, database: str) -> dict:
     started = time.monotonic()
     image = manifest["deployment"]["image"]
@@ -82,7 +89,7 @@ def verify(folder: Path, manifest: dict, database: str) -> dict:
         aliases = sorted({wp[0].split(":")[0], tree["dbhost"]})
         if any(not re.fullmatch(r"[a-zA-Z0-9_-]+", a) for a in aliases):
             raise ValueError("Unexpected database host")
-        run(["network", "connect", *[arg for a in aliases for arg in ["--alias", a]], namespace, database])
+        connect_database(namespace, database, aliases)
         base = [
             "run",
             "-d",
