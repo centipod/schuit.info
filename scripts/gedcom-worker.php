@@ -10,9 +10,11 @@ umask(0077); set_time_limit(0);
 $plugin = getenv('SCHUIT_GEDCOM_PLUGIN') ?: '/var/www/html/wp-content/plugins/schuit-gedcom';
 require_once $plugin . '/includes/jobs.php';
 require_once $plugin . '/includes/analyze.php';
+require_once $plugin . '/includes/consistency.php';
 // Deployment mounts the complete plugin separately; scripts can also run in a checkout.
 chdir('/var/www/html/tree');
 require '/var/www/html/tree/vendor/autoload.php';
+require_once $plugin . '/includes/consistency-pdf.php';
 Webtrees::new()->bootstrap();
 I18N::init('en-US', true);
 $c = parse_ini_file(getenv('WEBTREES_CONFIG_PATH') ?: 'data/config.ini.php', false, INI_SCANNER_RAW);
@@ -134,6 +136,12 @@ try {
                 $job['analysis']['warnings'][] = 'Dit bestand bevat minder ' . $label . ' dan Webtrees. Controleer of het bestand volledig is.';
             }
         }
+        $job['progress'] = 'Datums en familieverbanden controleren en PDF maken…'; write($job);
+        $report = \Schuit\Gedcom\checkConsistency(directory($id) . '/normalized.ged');
+        \Schuit\Gedcom\consistencyPdf($report, directory($id) . '/consistency.pdf');
+        unset($report['rows']);
+        $report['pdf_sha256'] = hash_file('sha256', directory($id) . '/consistency.pdf');
+        $job['analysis']['consistency'] = $report;
         $job['normalized_sha256'] = hash_file('sha256', directory($id) . '/normalized.ged');
         $job['state'] = 'ready'; $job['progress'] = 'Bestandscontrole afgerond. Er is nog niets geïmporteerd.'; write($job);
     } elseif ($action === 'import' && $job['state'] === 'backing_up' && !empty($job['backup_key'])) {
