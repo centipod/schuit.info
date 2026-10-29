@@ -54,10 +54,26 @@ test('malformed GEDCOM fails analysis and cannot be confirmed', async ({ page })
   await expect(page.locator('#sg-state')).toHaveText('Niet verwerkt');
   await expect(page.getByRole('button',{name:'Bevestigen en verwerken'})).toHaveCount(0);
 });
-test('review shows metrics; cancellation keeps the current data', async ({ page }) => {
+test('review shows metrics and a private PDF; cancellation keeps the current data', async ({ page, browser }) => {
   await login(page);await upload(page);worker('analyze');await page.reload();
   await expect(page.locator('#sg-state')).toHaveText('Klaar voor uw controle');
   await expect(page.locator('.sg-metrics')).toContainText('12');await expect(page.locator('.sg-metrics')).toContainText('4');
+  await expect(page.getByRole('heading',{name:'Consistentiecontrole',exact:true})).toBeVisible();
+  await expect(page.locator('.sg-consistency')).toContainText('Opvallende leeftijd van ouder');
+  const reportURL=await page.getByRole('link',{name:'Download bevindingen als PDF'}).getAttribute('href');
+  const pdf=await page.request.get(reportURL);
+  expect(pdf.status()).toBe(200);expect(pdf.headers()['content-type']).toBe('application/pdf');
+  expect(pdf.headers()['cache-control']).toContain('no-store');expect((await pdf.body()).subarray(0,5).toString()).toBe('%PDF-');
+  const invalidNonce=new URL(reportURL);invalidNonce.searchParams.set('_wpnonce','invalid');
+  expect((await page.request.get(invalidNonce.toString())).status()).toBe(403);
+  for (const username of [null,'ci_other','ci_reader']) {
+    const other=await browser.newContext({ignoreHTTPSErrors:true,baseURL:'https://localhost:19443'});
+    const otherPage=await other.newPage();if (username) { await login(otherPage,username); }
+    // Even a leaked owner's signed link must not expose the PDF to another account.
+    const denied=await other.request.get(reportURL);expect(denied.headers()['content-type']).not.toContain('application/pdf');
+    expect((await denied.body()).subarray(0,5).toString()).not.toBe('%PDF-');
+    await other.close();
+  }
   await expect(page.locator('input[name=replace_confirmed]')).not.toBeChecked();
   await page.getByRole('button',{name:/annuleren/i}).click();
   await expect(page.locator('#sg-state')).toHaveText('Geannuleerd');

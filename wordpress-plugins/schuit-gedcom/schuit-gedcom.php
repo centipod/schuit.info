@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SCHUIT GEDCOM beheer
  * Description: Privé GEDCOM-upload, controle en bevestigde verwerking voor Webtrees.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires PHP: 8.3
  * License: GPL-3.0-or-later
  */
@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace Schuit\Gedcom;
 if (!defined('ABSPATH')) { exit; }
 require_once __DIR__ . '/includes/jobs.php';
+require_once __DIR__ . '/includes/consistency.php';
+require_once __DIR__ . '/includes/report-download.php';
 
 const CAPABILITY = 'manage_schuit_gedcom';
 register_activation_hook(__FILE__, static function (): void {
@@ -42,8 +44,8 @@ add_action('admin_menu', static function (): void {
 });
 add_action('admin_enqueue_scripts', static function (string $hook): void {
     if ($hook !== 'tools_page_schuit-gedcom-import') { return; }
-    wp_enqueue_style('schuit-gedcom', plugins_url('style.css', __FILE__), [], '1.0.0');
-    wp_enqueue_script('schuit-gedcom', plugins_url('status.js', __FILE__), [], '1.0.0', true);
+    wp_enqueue_style('schuit-gedcom', plugins_url('style.css', __FILE__), [], '1.1.0');
+    wp_enqueue_script('schuit-gedcom', plugins_url('status.js', __FILE__), [], '1.1.0', true);
     wp_localize_script('schuit-gedcom', 'schuitGedcom', ['endpoint'=>admin_url('admin-ajax.php'), 'nonce'=>wp_create_nonce('schuit_gedcom_status')]);
 });
 
@@ -96,6 +98,45 @@ add_action('admin_post_schuit_gedcom', static function (): void {
     }
 });
 
+
+add_action('admin_post_schuit_gedcom_report', static function (): void {
+    access();
+    $id = sanitize_text_field(wp_unslash($_GET['job'] ?? ''));
+    check_admin_referer('schuit_gedcom_report_' . $id);
+    try { $handle = openConsistencyReport(owned($id)); }
+    catch (\Throwable) { wp_die('Rapport niet beschikbaar.', 'GEDCOM-beheer', ['response'=>404]); }
+    nocache_headers();
+    header('Cache-Control: private, no-store, max-age=0, must-revalidate');
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="SCHUIT-consistentie-' . substr($id,0,8) . '.pdf"');
+    header('X-Content-Type-Options: nosniff');
+    header('Content-Length: ' . fstat($handle)['size']);
+    fpassthru($handle); fclose($handle); exit;
+});
+
+function consistencySummary(array $job): void {
+    echo '<section class="sg-consistency"><h3>Consistentiecontrole</h3>';
+    $report = $job['analysis']['consistency'] ?? null;
+    if (!$report) {
+        echo '<p>Voor deze upload is nog geen consistentierapport beschikbaar. Bij oudere uploads kunt u het bestand opnieuw uploaden om deze controle uit te voeren.</p></section>'; return;
+    }
+    echo '<p><strong>' . esc_html(number_format_i18n($report['total'])) . ' aandachtspunten</strong> gevonden bij de controle van datums en familieverbanden. Dit zijn signalen voor onderzoek, geen automatische correcties. Ze verhinderen op zichzelf de import niet.</p>';
+    if ($report['counts']) {
+        echo '<table class="widefat striped"><thead><tr><th scope="col">Controle</th><th scope="col">Aantal</th></tr></thead><tbody>';
+        foreach (consistencyLabels() as $code=>$label) {
+            if (empty($report['counts'][$code])) { continue; }
+            echo '<tr><th scope="row">' . esc_html($label) . '</th><td>' . esc_html(number_format_i18n($report['counts'][$code])) . '</td></tr>';
+        }
+        echo '</tbody></table>';
+    }
+    echo '<p>Datumbereiken worden voorzichtig vergeleken. Circa-datums en andere onzekere datums worden niet als exacte datums behandeld. Geen signalen betekent niet dat alle gegevens historisch juist zijn.</p>';
+    if ($report['truncated']) {
+        echo '<p><strong>Het PDF bevat de eerste ' . esc_html(number_format_i18n($report['reported'])) . ' van ' . esc_html(number_format_i18n($report['total'])) . ' signalen.</strong> Bovenstaande aantallen tellen alle signalen. Verbeter het bronbestand en upload opnieuw om de resterende signalen te beoordelen.</p>';
+    }
+    $download = wp_nonce_url(admin_url('admin-post.php?action=schuit_gedcom_report&job=' . $job['id']), 'schuit_gedcom_report_' . $job['id']);
+    echo '<p><a class="button" href="' . esc_url($download) . '">Download bevindingen als PDF</a></p><p class="description">Het rapport kan persoonsgegevens bevatten. Deel het alleen met bevoegde beoordelaars. Beschikbaar voor de uploader en beheerders; het wordt samen met de upload na 30 dagen verwijderd.</p></section>';
+}
+
 add_action('wp_ajax_schuit_gedcom_status', static function (): void {
     access(); check_ajax_referer('schuit_gedcom_status');
     try {
@@ -127,6 +168,7 @@ function analysisDetails(array $job): void {
         echo '<dt>' . esc_html($label) . '</dt><dd>' . esc_html((string)$value) . '</dd>';
     }
     echo '</dl><p>Het origineel blijft privé bewaard. Alleen naamregels krijgen waar nodig een spatie vóór “/”. Links en bestandspaden blijven ongewijzigd. Mediarecords bevatten verwijzingen; foto’s en documenten worden niet met een GEDCOM-bestand meegeleverd.</p>';
+    consistencySummary($job);
     foreach ($a['warnings'] as $warning) { echo '<div class="notice notice-warning inline"><p>' . esc_html($warning) . '</p></div>'; }
 }
 
@@ -142,7 +184,7 @@ function page(): void {
         if ($job['state'] === 'ready') {
             echo '<h3>Controleer en bevestig</h3><p>De import vervangt de genealogische records in het hierboven genoemde bestand. Accounts, toegangsrechten, privacyinstellingen en bestaande mediabestanden blijven behouden. Eerst wordt een versleutelde back-up gemaakt. Webtrees is tijdens de verwerking tijdelijk niet beschikbaar; deze statuspagina blijft werken.</p>';
             form('confirm', $id);
-            echo '<p><label><input type="checkbox" name="replace_confirmed" value="yes" required> Ik heb de aantallen en waarschuwingen gecontroleerd en geef toestemming om de huidige genealogische gegevens te vervangen.</label></p><button class="button button-primary">Bevestigen en verwerken</button></form>';
+            echo '<p><label><input type="checkbox" name="replace_confirmed" value="yes" required> Ik heb de aantallen, waarschuwingen en consistentiecontrole beoordeeld en geef toestemming om de huidige genealogische gegevens te vervangen.</label></p><button class="button button-primary">Bevestigen en verwerken</button></form>';
             form('cancel', $id); echo '<p><button class="button">Deze upload annuleren</button></p></form>';
         } elseif ($job['state'] === 'completed') {
             echo '<p>De import is gecontroleerd en afgerond. De aantallen op de website worden automatisch vernieuwd.</p><a class="button button-primary" href="' . esc_url(home_url('/tree/')) . '">Open Webtrees</a>';

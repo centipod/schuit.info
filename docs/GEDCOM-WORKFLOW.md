@@ -38,3 +38,38 @@ After deployment, verify the existing complete GEDCOM export in analysis-only mo
 Application `2218279c160f890ac97a9db135dbadcff1447a57`; monitoring `c1a19c1522608e88c41d86794e41e3e6e3d5a8c2`. The PHP image is unchanged. All 15 parser fixtures, 15 HTTPS acceptance checks, synthetic native import, completion marker, count-mismatch rollback and file-tamper rejection passed on Hetzner. The original export was analyzed without import: 144,045 records, 98,014 individuals, 46,018 families, UTF-8 / GEDCOM 5.5.1, no missing references or normalization changes. All temporary users and jobs were removed.
 
 The verification screen was visually inspected using a sanitized synthetic render. Public portal, webtrees, backups and GEDCOM worker all report up on status.centipod.io. Fresh S3 backup and isolated restore succeeded, validating both databases and 14,231 files; restore finished at 18:39:52 UTC. Existing genealogical data and public-domain DNS were unchanged.
+
+## Consistentiecontrole en privé-PDF (plugin 1.1.0)
+
+Na de structurele controle onderzoekt dezelfde achtergrondtaak het genormaliseerde
+bestand met vaste regels. Er is geen AI, externe gegevensuitwisseling of automatische
+historische correctie. De controlepagina toont aantallen per categorie en een
+Centipod-PDF met onderwerp/recordcodes, bevinding, reden en mogelijke oplossing.
+
+Regels omvatten ongeldige/toekomstige datums, geboorte/overlijden/doop/begrafenis,
+leeftijd bij huwelijk en ouderschap, postume kinderen, ontbrekende/verkeerde of
+eenzijdige verwijzingen, zelfrelaties, afstammingslussen en mogelijke dubbele
+personen/huwelijken. Circa-datums, andere kalenders en dubbele jaartallen worden
+niet exact geïnterpreteerd; intervallen leiden alleen tot een melding als de
+tegenstrijdigheid ook aan de grenzen blijft bestaan. Biologische leeftijdsregels
+slaan expliciet adoptief/niet-biologisch ouderschap over. Mogelijke dubbele personen
+vereisen dezelfde naam en exacte geboortedatum; hertrouw op een andere datum wordt
+niet als dubbel huwelijk gemeld. Deze signalen zijn geen bewijs van fouten.
+
+Signalen blokkeren de import niet. Structurele fouten of een mislukte controle/PDF
+houden de taak buiten de bevestigingsfase. De gebruiker beoordeelt het rapport en
+bevestigt daarna expliciet. Er verandert niets aan de transactionele import of back-up.
+
+Het PDF staat buiten de webroot met modus 0600. Downloads vereisen de uploadrechten,
+taakeigendom (of administratorrechten), een taakgebonden WordPress-nonce en een
+SHA-256-controle. Reacties worden niet gecachet. Persoonsdetails staan niet in de
+AJAX-status of publieke statistieken. Het rapport vervalt met de upload na 30 dagen.
+De bestaande TCPDF-versie uit de vastgezette webtrees-dependencies rendert uitsluitend
+platte tekst en het lokale logo; er worden geen URL's uit uploads opgehaald.
+
+Verwerkingslimieten: 180 seconden en een geheugenbewaking op 280 MiB voor de
+consistentiecontrole, naast de bestaande upload-/recordlimieten. Het PDF bevat
+maximaal 500 signalen om onbetrouwbare uploads geen onbeperkte renderlast te geven.
+Bij meer signalen vermelden zowel pagina als PDF de beperking en het werkelijke
+totaal. Na broncorrecties kan opnieuw worden geüpload. Oude uploads krijgen niet
+achteraf een impliciete goedkeuring: zonder rapport vraagt de pagina om herupload.
