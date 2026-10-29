@@ -39,7 +39,15 @@ def php(action, identifier):
     return code
 
 
+def require_queue_access():
+    # Path.glob silently treats an inaccessible parent as an empty queue.
+    # Fail visibly before taking the worker lock instead of stranding uploads.
+    descriptor = os.open(ROOT, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    os.close(descriptor)
+
+
 def run():
+    require_queue_access()
     with Path("/run/lock/schuit-worker.lock").open("r+") as runner:
         try:
             fcntl.flock(runner, fcntl.LOCK_EX | fcntl.LOCK_NB)
