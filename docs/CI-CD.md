@@ -130,3 +130,9 @@ The SCHUIT backup/restore units and fixed worker broker use a dedicated
 from `deployment/backup-requirements.txt`. This keeps cryptography patched without
 changing the Python dependencies of other hosted services. Review dependency PRs and
 re-run `ci/install-controls.sh` when that lock changes; daily source scans include it.
+
+The private `/srv/schuit` parent has a named `www-data` ACL allowing traversal only
+(`--x`). It remains unlistable to the worker; child files/directories keep their
+own private modes. `ci/install-controls.sh` provisions this ACL (host `acl` package
+required). The queue worker explicitly opens its queue root with `O_NOFOLLOW`
+and fails if it cannot access it, rather than silently treating it as an empty queue.

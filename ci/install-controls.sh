@@ -7,6 +7,7 @@ install -d -m 755 -o root -g root /opt/infra/schuit
 # Dedicated, hash-locked runtime; do not change packages used by other hosted services.
 python3 -m venv /opt/infra/schuit/backup-venv
 /opt/infra/schuit/backup-venv/bin/pip install --require-hashes --only-binary=:all: -r "$source_dir/deployment/backup-requirements.txt"
+command -v setfacl >/dev/null || { echo "Install the host acl package before provisioning SCHUIT controls." >&2; exit 1; }
 systemctl stop schuit-gedcom.timer
 # Do not interrupt an active import. Re-enable the timer if the installer must be retried.
 if systemctl is-active --quiet schuit-gedcom.service; then
@@ -14,6 +15,9 @@ if systemctl is-active --quiet schuit-gedcom.service; then
   echo 'GEDCOM worker is busy; retry after completion.' >&2
   exit 1
 fi
+# Traverse the private parent without listing it or granting access to siblings.
+# The queue itself remains mode 0700, owned by www-data.
+setfacl -m u:www-data:--x /srv/schuit
 install -d -m 755 -o root -g root /opt/infra/schuit/deploy-gate
 for name in deploy_policy.py image_identity.py receive-deploy.py scan.sh security_policy.py; do
   install -m 644 "$source_dir/ci/$name" "/opt/infra/schuit/deploy-gate/$name"

@@ -17,6 +17,10 @@ spec = importlib.util.spec_from_file_location("broker", SCRIPTS / "worker-broker
 broker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(broker)
 
+worker_spec = importlib.util.spec_from_file_location("queue_worker", SCRIPTS / "gedcom-worker.py")
+worker = importlib.util.module_from_spec(worker_spec)
+worker_spec.loader.exec_module(worker)
+
 
 class QueueSecurity(unittest.TestCase):
     def setUp(self):
@@ -30,6 +34,22 @@ class QueueSecurity(unittest.TestCase):
         self.owner.start()
         self.addCleanup(self.owner.stop)
         self.job = {"id": self.identifier, "state": "queued"}
+
+    def test_inaccessible_queue_is_not_treated_as_empty(self):
+        with patch.object(worker.os, "open", side_effect=PermissionError("denied")):
+            with self.assertRaises(PermissionError):
+                worker.require_queue_access()
+
+    def test_empty_accessible_queue_is_valid(self):
+        with patch.object(worker, "ROOT", self.root):
+            worker.require_queue_access()
+
+    def test_queue_root_symlink_is_rejected(self):
+        link = self.root / "link"
+        link.symlink_to(self.folder, target_is_directory=True)
+        with patch.object(worker, "ROOT", link):
+            with self.assertRaises(OSError):
+                worker.require_queue_access()
 
     def test_original_symlink_attack_cannot_overwrite_external_file(self):
         victim = self.root / "victim"
