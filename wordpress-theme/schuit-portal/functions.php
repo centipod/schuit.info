@@ -213,7 +213,7 @@ function schuit_portal_foundation_links(): array {
         'Aantallen wereldwijd' => 'aantallen-wereldwijd',
         'Grootschippers' => 'grootschippers', 'Wetenswaardigheden' => 'wetenswaardigheden',
         'Kwartaalblad en nieuwsbrief' => 'kwartaalblad-in-hetzelfde-schu-y-i-ij-tje',
-        'Donateurs en sponsors' => 'adverteren', 'Donateurs en vrienden' => 'donateurs',
+        'Sponsors en donateurs' => 'adverteren',
         'Privacyreglement' => 'privacyreglement', 'Algemene voorwaarden' => 'algemene-voorwaarden',
         'Disclaimer' => 'disclaimer', 'General information' => 'general-information',
         'Links' => 'links',
@@ -239,7 +239,7 @@ function schuit_portal_sponsors(): void {
         echo '<div class="schuit-sponsors__advert">' . $html->get_updated_html() . '</div>';
     }
     echo '</div>';
-    printf('<p><a href="%s">Donateurs en sponsors</a></p></section>', esc_url(schuit_portal_page_url('adverteren', '/?page_id=270')));
+    printf('<p><a href="%s">Sponsors en donateurs</a></p></section>', esc_url(schuit_portal_page_url('adverteren', '/?page_id=270')));
 }
 
 function schuit_portal_fallback_content(string $slug): array {
@@ -279,3 +279,14 @@ function schuit_portal_fallback_content(string $slug): array {
         'content' => '',
     ];
 }
+
+/** Preserve old donor-page links after the approved sponsor-page consolidation. */
+function schuit_portal_redirect_merged_donors(): void {
+    if (!is_page('donateurs')) {
+        return;
+    }
+    $target = schuit_portal_page_url('adverteren', '/?page_id=270');
+    wp_safe_redirect($target, 301, 'SCHUIT');
+    exit;
+}
+add_action('template_redirect', 'schuit_portal_redirect_merged_donors');
