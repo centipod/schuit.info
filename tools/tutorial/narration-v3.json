@@ -1,0 +1,34 @@
+[
+  {
+    "scene": "intro",
+    "text": "In deze video ziet u hoe u de stamboomgegevens op de website van Stichting Schuit bijwerkt. We gebruiken een demonstratieomgeving met fictieve personen. De echte stamboom blijft ongewijzigd."
+  },
+  {
+    "scene": "aldfaer",
+    "text": "Werkt u met Aldfaer? Exporteer uw stamboom eerst als GEDCOM, via het menu Bestand. Kies een export die geschikt is voor GEDCOM versie vijf punt vijf punt één. Een Aldfaerbestand met de extensie A L X kunt u niet rechtstreeks uploaden. Heeft u al een geschikt GEDCOM-bestand? Dan kunt u deze stap overslaan. GEDCOM zeven wordt door deze uploadmodule nog niet ondersteund."
+  },
+  {
+    "scene": "login",
+    "text": "Open de aanmeldpagina op het adres dat in beeld staat. Meld u aan met uw eigen account en doorloop zo nodig de beveiligingscontrole. Na het aanmelden opent u in het WordPress-menu Tools, en vervolgens GEDCOM-beheer. In sommige versies heet dit menu Gereedschap. De aanmelding die u hier ziet is een lokale demonstratie; op de website gebruikt u de beveiligde aanmeldpagina."
+  },
+  {
+    "scene": "upload",
+    "text": "Klik op Bestand kiezen en selecteer uw GEDCOM-bestand, met de extensie ged. Het bestand mag maximaal honderd megabyte groot zijn. Klik daarna op Uploaden en controleren. De website onderzoekt het bestand eerst. De bestaande stamboom wordt op dit moment nog niet vervangen."
+  },
+  {
+    "scene": "review",
+    "text": "Bekijk het controlerapport zorgvuldig. Vergelijk het aantal personen en gezinnen met de gegevens die u verwacht. Controleer de bestandsversie en lees eventuele waarschuwingen. In ons voorbeeld bevat het nieuwe bestand twaalf personen en vier gezinnen. Kloppen de aantallen niet, of ziet u fouten? Stop dan en controleer de export in uw genealogieprogramma voordat u verdergaat."
+  },
+  {
+    "scene": "import",
+    "text": "Is de controle in orde? Vink dan de bevestiging aan en kies de knop om het bestand te verwerken. Daarmee geeft u toestemming om de bestaande stamboomgegevens te vervangen. Wacht totdat de verwerking is afgerond. Bij een groot bestand kan dit even duren. Start dezelfde verwerking niet opnieuw terwijl deze nog bezig is."
+  },
+  {
+    "scene": "stats",
+    "text": "Open vervolgens de stamboom via de website. Controleer in het overzicht of de aantallen overeenkomen met uw upload. In dit voorbeeld ziet u twaalf personen en vier gezinnen. Bekijk ook enkele bekende personen en gezinsrelaties. Zo controleert u niet alleen de aantallen, maar ook of de gegevens goed zijn overgekomen."
+  },
+  {
+    "scene": "end",
+    "text": "Bewaar uw oorspronkelijke bestand op een veilige plek. Deze uitleg gaat over stamboomgegevens; bijbehorende foto's en andere mediabestanden worden niet met deze upload toegevoegd. Twijfelt u over een melding of de uitkomst? Vraag eerst hulp voordat u opnieuw importeert."
+  }
+]
