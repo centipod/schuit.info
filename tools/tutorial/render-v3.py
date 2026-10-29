@@ -103,9 +103,9 @@ for idx,name in enumerate(names):
   else:
    inputs=['-loop','1','-i',str(src)]
    vf='scale=1440:810:force_original_aspect_ratio=decrease,pad=1440:810:(ow-iw)/2:(oh-ih)/2:color=0xf6f3ed,pad=1600:1000:80:100:color=0xf6f3ed,fps=25'
-  # Identical sample aspect ratios prevent filter reinitialization (and loss of
-  # the overlay) when concatenating a screenshot with recorded video.
-  run(['ffmpeg','-v','error','-y',*inputs,'-vf',vf+',setsar=1','-t',str(dur),'-an','-c:v','libx264','-preset','fast','-crf','18','-pix_fmt','yuv420p',str(dest)]);pieces.append(f"file '{dest}'\n")
+  # Match aspect ratio AND color range: screenshot PNGs may carry full-range
+  # metadata, which otherwise resets the overlay filter at concatenation seams.
+  run(['ffmpeg','-v','error','-y',*inputs,'-vf',vf+',setsar=1,scale=out_range=tv,format=yuv420p,setparams=range=limited:colorspace=bt470bg','-t',str(dur),'-an','-c:v','libx264','-preset','fast','-crf','18','-pix_fmt','yuv420p','-color_range','tv','-colorspace','bt470bg',str(dest)]);pieces.append(f"file '{dest}'\n")
  partlist=build/f'{name}-parts.txt';partlist.write_text(''.join(pieces));segment=build/f'{idx:02}-{name}.mp4'
  run(['ffmpeg','-v','error','-y','-f','concat','-safe','0','-i',str(partlist),'-f','concat','-safe','0','-i',str(overlaylist),'-i',str(audiofile),'-filter_complex','[0:v][1:v]overlay=0:0:format=auto,fps=25,format=yuv420p[v];[2:a]adelay=350:all=1,apad[a]','-map','[v]','-map','[a]','-t',str(length),'-c:v','libx264','-preset','fast','-crf','18','-c:a','aac','-b:a','192k','-ar','48000',str(segment)])
  timeline.append({'scene':name,'start':clock,'duration':length,'file':str(segment),'title':titles[idx]});clock+=length
