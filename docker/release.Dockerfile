@@ -1,5 +1,5 @@
 # Public, immutable inputs; no pre-existing Hetzner image or private files.
-FROM composer:2@sha256:b6dcd72ca98fa19d0e5b8476de179859704891fad06dd9e0b96833d4c430a5fc AS composer
+FROM composer:2@sha256:4ed71c38c6d788eb4e4e3747b5332f5b40d5b5a6fcadd5062a1a70986a118e0a AS composer
 FROM php:8.3.36-fpm-alpine3.24@sha256:25e15cf35ed0f5b75d8cf14fc2c4ed7e0e6bee00d359e681b7fa3e91a7bee49f AS build
 COPY deployment/apk/build.lock /tmp/apk.lock
 RUN apk add --no-cache $(cat /tmp/apk.lock) \
