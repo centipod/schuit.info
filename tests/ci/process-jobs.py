@@ -30,14 +30,22 @@ def php(code):
 
 assert php('<?php echo getenv("CI_FIXTURE");') == "synthetic-only"
 mode = sys.argv[1]
-assert mode in ("analyze", "import")
+assert mode in ("analyze", "analyze-retired", "import")
 jobs = json.loads(
     php(
         '<?php $r=[];foreach(glob("/var/lib/schuit-gedcom/*/status.json") as $p){$j=json_decode(file_get_contents($p),true);$r[]=["id"=>$j["id"],"state"=>$j["state"]];}echo json_encode($r);'
     )
 )
 for job in jobs:
-    if mode == "analyze" and job["state"] == "uploaded":
+    if mode == "analyze-retired" and job["id"] == sys.argv[2]:
+        assert job["state"] == "cancelled"
+        # Simulate the host selecting an upload immediately before replacement.
+        result = run(
+            "exec", "-T", "web", "php", "/opt/schuit-scripts/gedcom-worker.php", "analyze", job["id"],
+            capture_output=True,
+        )
+        assert json.loads(result.stdout)["state"] == "cancelled"
+    elif mode == "analyze" and job["state"] == "uploaded":
         result = subprocess.run(
             cmd + ["exec", "-T", "web", "php", "/opt/schuit-scripts/gedcom-worker.php", "analyze", job["id"]],
             capture_output=True,
