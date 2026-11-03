@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SCHUIT GEDCOM beheer
  * Description: Privé GEDCOM-upload, controle en bevestigde verwerking voor Webtrees.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires PHP: 8.3
  * License: GPL-3.0-or-later
  */
@@ -38,14 +38,17 @@ function labels(): array {
         'queued'=>'Bevestigd, wacht op verwerking', 'backing_up'=>'Veilige back-up maken', 'importing'=>'Verwerken in Webtrees',
         'completed'=>'Import voltooid', 'failed'=>'Niet verwerkt', 'cancelled'=>'Geannuleerd'];
 }
+function label(array $job): string {
+    return isset($job['superseded_by']) ? 'Vervangen door nieuwere upload' : (labels()[$job['state']] ?? $job['state']);
+}
 
 add_action('admin_menu', static function (): void {
     add_management_page('GEDCOM-beheer', 'GEDCOM-beheer', CAPABILITY, 'schuit-gedcom-import', __NAMESPACE__ . '\\page');
 });
 add_action('admin_enqueue_scripts', static function (string $hook): void {
     if ($hook !== 'tools_page_schuit-gedcom-import') { return; }
-    wp_enqueue_style('schuit-gedcom', plugins_url('style.css', __FILE__), [], '1.1.0');
-    wp_enqueue_script('schuit-gedcom', plugins_url('status.js', __FILE__), [], '1.1.0', true);
+    wp_enqueue_style('schuit-gedcom', plugins_url('style.css', __FILE__), [], '1.2.0');
+    wp_enqueue_script('schuit-gedcom', plugins_url('status.js', __FILE__), [], '1.2.0', true);
     wp_localize_script('schuit-gedcom', 'schuitGedcom', ['endpoint'=>admin_url('admin-ajax.php'), 'nonce'=>wp_create_nonce('schuit_gedcom_status')]);
 });
 
@@ -62,35 +65,17 @@ add_action('admin_post_schuit_gedcom', static function (): void {
             if (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) !== 'ged' || filesize($file['tmp_name']) > MAX_BYTES) {
                 throw new \RuntimeException('Alleen .ged-bestanden tot 100 MB zijn toegestaan.');
             }
-            $queue = fopen(root() . '/queue.lock', 'c');
-            if (!$queue || !flock($queue, LOCK_EX)) { throw new \RuntimeException('De opslag is niet beschikbaar.'); }
-            try {
-                $active = 0; $bytes = 0;
-                foreach (jobs() as $existing) {
-                    if (!in_array($existing['state'], ['completed','failed','cancelled'], true)) { ++$active; }
-                    $bytes += (int)($existing['bytes'] ?? 0);
-                }
-                if ($active >= 3 || $bytes + filesize($file['tmp_name']) > 500 * 1024 * 1024) {
-                    throw new \RuntimeException('De wachtrij is vol. Rond bestaande taken af of vraag de beheerder om opslag vrij te maken.');
-                }
-                $id = bin2hex(random_bytes(16)); $folder = directory($id);
-                if (!mkdir($folder, 0700)) { throw new \RuntimeException('Uploadmap aanmaken mislukt.'); }
-                if (!move_uploaded_file($file['tmp_name'], $folder . '/original.ged')) { throw new \RuntimeException('Upload bewaren mislukt.'); }
-                chmod($folder . '/original.ged', 0600);
-                write(['id'=>$id, 'owner'=>get_current_user_id(), 'filename'=>sanitize_file_name($file['name']),
-                    'bytes'=>filesize($folder . '/original.ged'), 'created_at'=>gmdate('c'), 'state'=>'uploaded']);
-            } finally { flock($queue, LOCK_UN); fclose($queue); }
+            $job = enqueueUpload(get_current_user_id(), sanitize_file_name($file['name']), (int)filesize($file['tmp_name']),
+                static function (string $path) use ($file): void {
+                    if (!move_uploaded_file($file['tmp_name'], $path)) { throw new \RuntimeException('Upload bewaren mislukt.'); }
+                });
+            $id = $job['id'];
         } elseif (in_array($action, ['confirm','cancel'], true)) {
             owned($id);
-            change($id, static function (array $job) use ($action): array {
-                if ($job['state'] !== 'ready') { throw new \RuntimeException('Deze taak kan niet meer worden gewijzigd.'); }
-                if ($action === 'confirm' && ($_POST['replace_confirmed'] ?? '') !== 'yes') {
-                    throw new \RuntimeException('Bevestig eerst dat de gecontroleerde gegevens de huidige gegevens mogen vervangen.');
-                }
-                $job['state'] = $action === 'confirm' ? 'queued' : 'cancelled';
-                $job['confirmed_by'] = get_current_user_id(); $job['confirmed_at'] = gmdate('c');
-                return $job;
-            });
+            if ($action === 'confirm' && ($_POST['replace_confirmed'] ?? '') !== 'yes') {
+                throw new \RuntimeException('Bevestig eerst dat de gecontroleerde gegevens de huidige gegevens mogen vervangen.');
+            }
+            reviewJob($id, $action === 'confirm', get_current_user_id());
         } else { throw new \RuntimeException('Ongeldige actie.'); }
         wp_safe_redirect(url($id)); exit;
     } catch (\Throwable $e) {
@@ -141,7 +126,7 @@ add_action('wp_ajax_schuit_gedcom_status', static function (): void {
     access(); check_ajax_referer('schuit_gedcom_status');
     try {
         $job = owned(sanitize_text_field(wp_unslash($_GET['job'] ?? '')));
-        wp_send_json_success(['state'=>$job['state'], 'label'=>labels()[$job['state']] ?? $job['state'],
+        wp_send_json_success(['state'=>$job['state'], 'label'=>label($job),
             'progress'=>$job['progress'] ?? '', 'updated'=>$job['updated_at']]);
     } catch (\Throwable) { wp_send_json_error(['message'=>'Taak niet beschikbaar.'], 404); }
 });
@@ -178,7 +163,14 @@ function page(): void {
     $id = sanitize_text_field(wp_unslash($_GET['job'] ?? ''));
     if ($id) {
         try { $job = owned($id); } catch (\Throwable) { echo '<p>Taak niet beschikbaar.</p></div>'; return; }
-        echo '<p><a href="' . esc_url(url()) . '">← Alle uploads</a></p><section class="sg-panel" data-job="' . esc_attr($id) . '" data-state="' . esc_attr($job['state']) . '"><h2>' . esc_html($job['filename']) . '</h2><p><strong id="sg-state" role="status">' . esc_html(labels()[$job['state']]) . '</strong></p><p id="sg-progress" aria-live="polite">' . esc_html((string)($job['progress'] ?? '')) . '</p><p id="sg-connection"></p>';
+        echo '<p><a href="' . esc_url(url()) . '">← Alle uploads</a></p><section class="sg-panel" data-job="' . esc_attr($id) . '" data-state="' . esc_attr($job['state']) . '"><h2>' . esc_html($job['filename']) . '</h2><p><strong id="sg-state" role="status">' . esc_html(label($job)) . '</strong></p><p id="sg-progress" aria-live="polite">' . esc_html((string)($job['progress'] ?? '')) . '</p><p id="sg-connection"></p>';
+        if (isset($job['superseded_by'])) {
+            echo '<p>Een nieuwere upload heeft dit bestand vervangen. Het origineel en eventuele controleresultaten blijven beschikbaar tot het einde van de bewaartermijn.</p>';
+            try {
+                $replacement = owned($job['superseded_by']);
+                echo '<p><a class="button" href="' . esc_url(url($replacement['id'])) . '">Open vervangende upload</a></p>';
+            } catch (\Throwable) { /* Do not disclose another manager\'s upload. */ }
+        }
         if (isset($job['error'])) { echo '<div class="notice notice-error inline"><p>' . esc_html($job['error']) . '</p></div>'; }
         if (isset($job['analysis'])) { analysisDetails($job); }
         if ($job['state'] === 'ready') {
@@ -191,11 +183,11 @@ function page(): void {
         }
         echo '</section>';
     } else {
-        echo '<section class="sg-panel"><h2>Nieuw bestand uploaden</h2><p>Kies een GEDCOM 5.5 of 5.5.1-bestand (.ged), maximaal 100 MB. Uploaden verandert nog niets in Webtrees. U krijgt eerst een controlepagina.</p>';
+        echo '<section class="sg-panel"><h2>Nieuw bestand uploaden</h2><p>Kies een GEDCOM 5.5 of 5.5.1-bestand (.ged), maximaal 100 MB. Uploaden verandert nog niets in Webtrees. U krijgt eerst een controlepagina.</p><p>Een nieuwe upload vervangt alle eerdere uploads die nog niet voor import zijn bevestigd, ook van andere beheerders. Deze blijven in de geschiedenis staan. Al bevestigde imports worden niet onderbroken.</p>';
         form('upload'); echo '<p><label for="sg-file">GEDCOM-bestand</label><br><input id="sg-file" type="file" name="gedcom" accept=".ged" required></p><button class="button button-primary">Uploaden en controleren</button></form><p>Bestanden staan buiten de publieke website. Uploads en controleresultaten worden na 30 dagen verwijderd. Versleutelde back-ups hebben een afzonderlijke bewaartermijn.</p></section><h2>Uploads</h2><table class="widefat striped"><thead><tr><th>Bestand</th><th>Status</th><th>Geüpload (UTC)</th></tr></thead><tbody>';
         foreach (jobs() as $job) {
             if (!visible($job)) { continue; }
-            echo '<tr><td><a href="' . esc_url(url($job['id'])) . '">' . esc_html($job['filename']) . '</a></td><td>' . esc_html(labels()[$job['state']]) . '</td><td>' . esc_html($job['created_at']) . '</td></tr>';
+            echo '<tr><td><a href="' . esc_url(url($job['id'])) . '">' . esc_html($job['filename']) . '</a></td><td>' . esc_html(label($job)) . '</td><td>' . esc_html($job['created_at']) . '</td></tr>';
         }
         echo '</tbody></table>';
     }

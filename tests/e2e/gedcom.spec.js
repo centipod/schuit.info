@@ -78,6 +78,29 @@ test('review shows metrics and a private PDF; cancellation keeps the current dat
   await page.getByRole('button',{name:/annuleren/i}).click();
   await expect(page.locator('#sg-state')).toHaveText('Geannuleerd');
 });
+test('new upload supersedes an open review and rejects its stale confirmation', async ({ page }) => {
+  await login(page);await upload(page);worker('analyze');await page.reload();
+  const oldId=new URL(page.url()).searchParams.get('job');
+  const nonce=await page.locator('form input[name=_wpnonce]').first().inputValue();
+  const reportURL=await page.getByRole('link',{name:'Download bevindingen als PDF'}).getAttribute('href');
+  const reportBefore=await (await page.request.get(reportURL)).body();
+  const replacement=await page.context().newPage();await replacement.goto(adminPath);await upload(replacement);
+  const replacementURL=replacement.url();
+  // A ready review page must notice replacement without a manual reload.
+  await expect(page.locator('#sg-state')).toHaveText('Vervangen door nieuwere upload',{timeout:15000});
+  await expect(page.getByRole('button',{name:'Bevestigen en verwerken'})).toHaveCount(0);
+  const stale=await page.request.post('/wp-admin/admin-post.php',{form:{
+    action:'schuit_gedcom',operation:'confirm',job:oldId,_wpnonce:nonce,replace_confirmed:'yes'
+  }});
+  expect(stale.status()).toBe(400);
+  expect(await stale.text()).toContain('Deze taak kan niet meer worden gewijzigd');
+  expect(await (await page.request.get(reportURL)).body()).toEqual(reportBefore);
+  worker('analyze-retired',oldId);
+  await page.getByRole('link',{name:'Open vervangende upload'}).click();await expect(page).toHaveURL(replacementURL);
+  worker('analyze');await page.reload();await expect(page.locator('#sg-state')).toHaveText('Klaar voor uw controle');
+  // Leave the synthetic import to the existing explicit-confirmation test.
+  await page.getByRole('button',{name:/annuleren/i}).click();await replacement.close();
+});
 test('upload → verify → explicit confirmation → real import → Webtrees statistics', async ({ page, browser }) => {
   await login(page);await upload(page);worker('analyze');await page.reload();
   const reviewURL=page.url();

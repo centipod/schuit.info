@@ -1,6 +1,6 @@
 (() => {
   const panel = document.querySelector('[data-job]');
-  if (!panel || !['uploaded', 'analyzing', 'queued', 'backing_up', 'importing'].includes(panel.dataset.state)) return;
+  if (!panel || !['uploaded', 'analyzing', 'ready', 'queued', 'backing_up', 'importing'].includes(panel.dataset.state)) return;
   const poll = async () => {
     try {
       const query = new URLSearchParams({action: 'schuit_gedcom_status', job: panel.dataset.job, _ajax_nonce: schuitGedcom.nonce});

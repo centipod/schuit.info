@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 use Fisharebest\Webtrees\{DB, I18N, Registry, Tree, Webtrees};
 use Fisharebest\Webtrees\Services\GedcomImportService;
-use function Schuit\Gedcom\{analyze, directory, lines, read, root, write};
+use Schuit\Gedcom\AnalysisStopped;
+use function Schuit\Gedcom\{analyze, directory, lines, read, root, saveAnalysis, write};
 
 if (PHP_SAPI !== 'cli') { exit(1); }
 umask(0077); set_time_limit(0);
@@ -120,30 +121,34 @@ function processImport(array &$job, Tree $tree): void {
 
 if (defined('SCHUIT_GEDCOM_TEST_LIBRARY')) { return; }
 $id = $argv[2] ?? ''; $action = $argv[1] ?? '';
-$job = read($id);
 $worker = fopen(root() . '/worker.lock', 'c');
 if (!flock($worker, LOCK_EX | LOCK_NB)) { exit(75); }
+$job = read($id);
 try {
+    if ($action === 'analyze' && !in_array($job['state'], ['uploaded','analyzing'], true)) {
+        // The host may have selected this upload just before it was superseded.
+        echo json_encode(['id'=>$id,'state'=>$job['state']]) . "\n"; exit(0);
+    }
     $tree = target();
     if ($action === 'analyze' && in_array($job['state'], ['uploaded','analyzing'], true)) {
-        $job['state'] = 'analyzing'; write($job);
+        $job['state'] = 'analyzing'; saveAnalysis($job);
         $job['baseline'] = baseline($tree);
         $job['analysis'] = analyze(directory($id) . '/original.ged', directory($id) . '/normalized.ged', static function (int $lines, int $records) use (&$job): void {
-            $job['progress'] = $lines . ' regels / ' . $records . ' records gecontroleerd'; write($job);
+            $job['progress'] = $lines . ' regels / ' . $records . ' records gecontroleerd'; saveAnalysis($job);
         });
         foreach (['INDI'=>'personen','FAM'=>'gezinnen'] as $tag=>$label) {
             if ($job['analysis']['counts'][$tag] < $job['baseline']['counts'][$tag]) {
                 $job['analysis']['warnings'][] = 'Dit bestand bevat minder ' . $label . ' dan Webtrees. Controleer of het bestand volledig is.';
             }
         }
-        $job['progress'] = 'Datums en familieverbanden controleren en PDF maken…'; write($job);
+        $job['progress'] = 'Datums en familieverbanden controleren en PDF maken…'; saveAnalysis($job);
         $report = \Schuit\Gedcom\checkConsistency(directory($id) . '/normalized.ged');
         \Schuit\Gedcom\consistencyPdf($report, directory($id) . '/consistency.pdf');
         unset($report['rows']);
         $report['pdf_sha256'] = hash_file('sha256', directory($id) . '/consistency.pdf');
         $job['analysis']['consistency'] = $report;
         $job['normalized_sha256'] = hash_file('sha256', directory($id) . '/normalized.ged');
-        $job['state'] = 'ready'; $job['progress'] = 'Bestandscontrole afgerond. Er is nog niets geïmporteerd.'; write($job);
+        $job['state'] = 'ready'; $job['progress'] = 'Bestandscontrole afgerond. Er is nog niets geïmporteerd.'; saveAnalysis($job);
     } elseif ($action === 'import' && $job['state'] === 'backing_up' && !empty($job['backup_key'])) {
         if (imported($id,$tree)) { $job['state']='completed'; write($job); }
         else { processImport($job,$tree); }
@@ -152,6 +157,8 @@ try {
         else { throw new RuntimeException('De verwerking is onderbroken en teruggedraaid. Upload het bestand opnieuw.'); }
     } else { throw new RuntimeException('De taak is niet klaar voor deze actie.'); }
     echo json_encode(['id'=>$id,'state'=>$job['state']]) . "\n";
+} catch (AnalysisStopped) {
+    echo json_encode(['id'=>$id,'state'=>read($id)['state']]) . "\n";
 } catch (Throwable $e) {
     // A DB exception can embed private GEDCOM content. Never expose it to users/journald.
     if (isset($tree) && imported($id,$tree)) { $job['state']='completed'; $job['progress']='Import voltooid.'; }
@@ -160,5 +167,10 @@ try {
         $job['error'] = get_class($e) === RuntimeException::class ? $e->getMessage() : 'De verwerking is niet voltooid. De bestaande gegevens blijven behouden. Neem contact op met de beheerder met het taaknummer.';
         $job['diagnostic_class']=get_class($e);
     }
-    write($job); echo json_encode(['id'=>$id,'state'=>$job['state'],'error_class'=>get_class($e)]) . "\n"; exit(1);
+    try {
+        if ($action === 'analyze') { saveAnalysis($job); } else { write($job); }
+    } catch (AnalysisStopped) {
+        echo json_encode(['id'=>$id,'state'=>read($id)['state']]) . "\n"; exit(0);
+    }
+    echo json_encode(['id'=>$id,'state'=>$job['state'],'error_class'=>get_class($e)]) . "\n"; exit(1);
 }
